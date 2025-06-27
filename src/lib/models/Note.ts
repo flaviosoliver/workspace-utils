@@ -1,39 +1,38 @@
-import mongoose, { Schema, Document } from 'mongoose';
-import { Note as INote } from '@/types';
+import mongoose, { Schema, Document, Types } from 'mongoose';
 
-export interface NoteDocument extends Omit<INote, '_id'>, Document {}
+export interface NoteDocument extends Document {
+  userId: Types.ObjectId;
+  title: string;
+  content: string;
+  tags: string[];
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-const NoteSchema = new Schema<NoteDocument>({
-  userId: { 
-    type: Schema.Types.ObjectId, 
-    ref: 'User', 
-    required: true 
+const NoteSchema = new Schema<NoteDocument>(
+  {
+    userId: {
+      type: Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    title: {
+      type: String,
+      required: true,
+    },
+    content: {
+      type: String,
+      required: true,
+    },
+    tags: {
+      type: [String],
+      default: [],
+    },
   },
-  title: { 
-    type: String, 
-    required: true,
-    trim: true,
-    maxlength: 200,
-  },
-  content: { 
-    type: String,
-    required: true,
-    maxlength: 10000,
-  },
-  tags: [{ 
-    type: String,
-    trim: true,
-    lowercase: true,
-    maxlength: 50,
-  }],
-}, {
-  timestamps: true,
-});
+  {
+    timestamps: true,
+  }
+);
 
-// Indexes for better performance
-NoteSchema.index({ userId: 1 });
-NoteSchema.index({ userId: 1, tags: 1 });
-NoteSchema.index({ title: 'text', content: 'text' });
-
-export default mongoose.models.Note || mongoose.model<NoteDocument>('Note', NoteSchema);
-
+export default mongoose.models.Note ||
+  mongoose.model<NoteDocument>('Note', NoteSchema);

@@ -13,6 +13,7 @@ import {
   DataGeneratorWidget,
   AIChatWidget,
   SettingsWidget,
+  WaterReminderWidget,
 } from '@/components/widgets';
 import { Sidebar } from '@/components/layout';
 import { Window } from '@/components/ui';
@@ -28,6 +29,13 @@ const WidgetComponents = {
   dataGenerator: () => <DataGeneratorWidget />,
   aiChat: () => <AIChatWidget />,
   settings: () => <SettingsWidget />,
+  water: () => (
+    <WaterReminderWidget
+      onClose={function (): void {
+        throw new Error('Function not implemented.');
+      }}
+    />
+  ),
 };
 
 export default function WorkspaceLayout() {

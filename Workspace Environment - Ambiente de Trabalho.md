@@ -1,4 +1,4 @@
-# Workspace Environment - Ambiente de Trabalho
+# Workspace Utils - Ambiente de Trabalho
 
 Um ambiente de trabalho completo desenvolvido em Next.js 15 com múltiplos widgets produtivos, sistema de autenticação, personalização de temas e interface com janelas redimensionáveis estilo Ubuntu.
 

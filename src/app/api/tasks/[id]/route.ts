@@ -5,7 +5,7 @@ import { verifyToken } from '@/lib/auth';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const token = request.cookies.get('token')?.value;
@@ -22,7 +22,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { id } = params;
+    const { id } = await params;
 
     await connectDB();
     const task = await Task.findOne({ _id: id, userId: decoded.userId });
@@ -49,7 +49,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const token = request.cookies.get('token')?.value;
@@ -65,7 +65,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = await params;
 
     await connectDB();
     const task = await Task.findOneAndDelete({

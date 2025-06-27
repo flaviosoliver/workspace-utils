@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import { User } from '@/lib/models';
 import { verifyToken, extractTokenFromRequest } from '@/lib/auth';
+import { User as UserType, UserPreferences } from '@/types'; // Importa o tipo User e UserPreferences do arquivo de tipos
 
 export async function PATCH(request: NextRequest) {
   try {
@@ -27,16 +28,21 @@ export async function PATCH(request: NextRequest) {
     const updates = await request.json();
 
     // Validar campos permitidos
-    const allowedFields = ['theme', 'language', 'timezone', 'notifications'];
-    const preferences: any = {};
+    const allowedFields: Array<keyof UserPreferences> = [
+      'theme',
+      'language',
+      'timezone',
+      'notifications',
+    ];
+    const preferencesToUpdate: Partial<UserPreferences> = {};
 
     Object.keys(updates).forEach((key) => {
-      if (allowedFields.includes(key)) {
-        preferences[`preferences.${key}`] = updates[key];
+      if (allowedFields.includes(key as keyof UserPreferences)) {
+        preferencesToUpdate[key as keyof UserPreferences] = updates[key];
       }
     });
 
-    if (Object.keys(preferences).length === 0) {
+    if (Object.keys(preferencesToUpdate).length === 0) {
       return NextResponse.json(
         { error: 'Nenhum campo válido fornecido' },
         { status: 400 }
@@ -46,7 +52,7 @@ export async function PATCH(request: NextRequest) {
     // Atualizar usuário
     const user = await User.findByIdAndUpdate(
       decoded.userId,
-      { $set: preferences },
+      { $set: { preferences: preferencesToUpdate } },
       { new: true, runValidators: true }
     ).select('-password');
 
