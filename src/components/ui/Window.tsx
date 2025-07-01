@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, ReactNode } from 'react';
-import { Minus, Square, X, Maximize2, Minimize2 } from 'lucide-react';
+import { Minus, X, Maximize2, Minimize2 } from 'lucide-react';
 import { useWorkspace } from '@/contexts/WorkspaceContext';
 import { Widget } from '@/types';
 
@@ -15,7 +15,7 @@ const minSizes: Record<string, { width: number; height: number }> = {
   timer: { width: 350, height: 550 },
   pomodoro: { width: 350, height: 550 },
   todo: { width: 620, height: 420 },
-  notes: { width: 400, height: 300 },
+  notes: { width: 600, height: 400 },
   music: { width: 350, height: 250 },
   dataGenerator: { width: 320, height: 220 },
   aiChat: { width: 400, height: 350 },

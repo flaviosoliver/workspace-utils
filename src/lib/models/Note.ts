@@ -1,18 +1,14 @@
 import mongoose, { Schema, Document, Types } from 'mongoose';
+import { Note } from '@/types';
 
-export interface NoteDocument extends Document {
+export interface NoteDocument extends Omit<Note, '_id' | 'userId'>, Document {
   userId: Types.ObjectId;
-  title: string;
-  content: string;
-  tags: string[];
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 const NoteSchema = new Schema<NoteDocument>(
   {
     userId: {
-      type: Schema.Types.ObjectId,
+      type: Types.ObjectId,
       ref: 'User',
       required: true,
     },

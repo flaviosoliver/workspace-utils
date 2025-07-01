@@ -56,6 +56,20 @@ export default function Sidebar() {
     return widgets.some((w) => w.type === type && activeWidgets.includes(w.id));
   };
 
+  async function handleLogout() {
+    await fetch('/api/auth/logout', { method: 'POST' });
+
+    localStorage.clear();
+
+    document.cookie.split(';').forEach((cookie) => {
+      const eqPos = cookie.indexOf('=');
+      const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+      document.cookie = name + '=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/';
+    });
+
+    window.location.href = '/';
+  }
+
   return (
     <div className='fixed left-0 top-0 h-full w-16 bg-gray-900 border-r border-gray-700 flex flex-col items-center py-4 z-50'>
       <div className='w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mb-6'>
@@ -111,7 +125,7 @@ export default function Sidebar() {
         </button>
 
         <button
-          onClick={logout}
+          onClick={handleLogout}
           className='w-12 h-12 rounded-lg bg-gray-800 text-gray-400 hover:bg-red-600 hover:text-white flex items-center justify-center transition-all duration-200 group relative'
           title='Sair'
         >
