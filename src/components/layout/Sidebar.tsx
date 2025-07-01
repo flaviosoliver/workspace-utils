@@ -21,27 +21,27 @@ const widgetIcons: Record<
   WidgetType,
   React.ComponentType<React.SVGProps<SVGSVGElement>>
 > = {
+  water: Droplet,
   tasks: CheckSquare,
-  timer: Clock,
-  pomodoro: Timer,
   todo: ListTodo,
   notes: StickyNote,
-  music: Music,
+  timer: Clock,
+  pomodoro: Timer,
   dataGenerator: Database,
+  music: Music,
   aiChat: MessageSquare,
-  water: Droplet,
 };
 
 const widgetLabels: Record<WidgetType, string> = {
+  water: 'Lembrete de Água',
   tasks: 'Tarefas',
-  timer: 'Timer',
-  pomodoro: 'Pomodoro',
   todo: 'To-Do',
   notes: 'Notas',
+  timer: 'Timer',
+  pomodoro: 'Pomodoro',
+  dataGenerator: 'Gerar Dados',
   music: 'Música',
-  dataGenerator: 'Dados',
   aiChat: 'Chat IA',
-  water: 'Água',
 };
 
 export default function Sidebar() {

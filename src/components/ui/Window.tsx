@@ -17,7 +17,7 @@ const minSizes: Record<string, { width: number; height: number }> = {
   todo: { width: 620, height: 420 },
   notes: { width: 600, height: 400 },
   music: { width: 350, height: 250 },
-  dataGenerator: { width: 320, height: 220 },
+  dataGenerator: { width: 550, height: 600 },
   aiChat: { width: 400, height: 350 },
   water: { width: 400, height: 300 },
   settings: { width: 320, height: 220 },

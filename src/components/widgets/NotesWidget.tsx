@@ -21,10 +21,8 @@ export default function NotesWidget() {
   const [showNewNoteForm, setShowNewNoteForm] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Carregar notas da API
   useEffect(() => {
     fetchNotes();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchNotes = async () => {
@@ -147,7 +145,7 @@ export default function NotesWidget() {
 
   return (
     <div className='h-full flex'>
-      <div className='w-1/3 border-r border-gray-700 flex flex-col'>
+      <div className='w-1/3 border-r border-gray-700 flex flex-col min-h-0'>
         <div className='p-4 border-b border-gray-700'>
           <div className='flex items-center justify-between mb-3'>
             <h2 className='text-lg font-semibold text-white'>Notas</h2>
@@ -172,7 +170,7 @@ export default function NotesWidget() {
           </div>
         </div>
 
-        <div className='flex-1 overflow-y-auto'>
+        <div className='flex-1 overflow-y-auto min-h-0'>
           {loading ? (
             <div className='p-4 text-center text-gray-400'>Carregando...</div>
           ) : filteredNotes.length === 0 ? (
@@ -208,7 +206,6 @@ export default function NotesWidget() {
                     onClick={async (e) => {
                       e.stopPropagation();
                       await deleteNote(note._id);
-                      // Seleciona outra nota após deletar
                       if (selectedNote?._id === note._id) {
                         setSelectedNote(
                           notes.length > 1
@@ -228,9 +225,9 @@ export default function NotesWidget() {
         </div>
       </div>
 
-      <div className='flex-1 flex flex-col'>
+      <div className='flex-1 flex flex-col min-h-0'>
         {showNewNoteForm ? (
-          <div className='h-full flex flex-col'>
+          <div className='h-full flex flex-col min-h-0'>
             <div className='p-4 border-b border-gray-700 flex items-center justify-between'>
               <h3 className='text-lg font-semibold text-white'>Nova Nota</h3>
               <div className='flex gap-2'>
@@ -255,7 +252,7 @@ export default function NotesWidget() {
               </div>
             </div>
 
-            <div className='p-4 flex-1 flex flex-col'>
+            <div className='p-4 flex-1 flex flex-col min-h-0'>
               <input
                 type='text'
                 value={editTitle}
@@ -267,12 +264,12 @@ export default function NotesWidget() {
                 value={editContent}
                 onChange={(e) => setEditContent(e.target.value)}
                 placeholder='Escreva sua nota aqui...'
-                className='flex-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 resize-none'
+                className='flex-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500 resize-none overflow-y-auto min-h-40'
               />
             </div>
           </div>
         ) : selectedNote ? (
-          <div className='h-full flex flex-col'>
+          <div className='h-full flex flex-col min-h-0'>
             <div className='p-4 border-b border-gray-700 flex items-center justify-between'>
               <div>
                 <h3 className='text-lg font-semibold text-white'>
@@ -319,7 +316,7 @@ export default function NotesWidget() {
               </div>
             </div>
 
-            <div className='p-4 flex-1 flex flex-col'>
+            <div className='p-4 flex-1 flex flex-col min-h-0'>
               {isEditing ? (
                 <>
                   <input
@@ -333,11 +330,11 @@ export default function NotesWidget() {
                     placeholder='Escreva sua nota aqui...'
                     value={editContent}
                     onChange={(e) => setEditContent(e.target.value)}
-                    className='flex-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500 resize-none'
+                    className='flex-1 w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:border-blue-500 resize-none overflow-y-auto min-h-40'
                   />
                 </>
               ) : (
-                <div className='flex-1 overflow-y-auto'>
+                <div className='flex-1 overflow-y-auto min-h-40'>
                   <div className='prose prose-invert max-w-none'>
                     <pre className='whitespace-pre-wrap text-gray-300 font-sans'>
                       {selectedNote.content || 'Esta nota está vazia.'}

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Check, Trash2, Circle } from 'lucide-react';
+import { Plus, Check, X, Edit2, Save, Trash2 } from 'lucide-react';
 import { TodoList, TodoItem } from '@/types';
 
 export default function TodoWidget() {
@@ -160,8 +160,8 @@ export default function TodoWidget() {
 
   return (
     <div className='flex h-full'>
-      <div className='w-64 bg-gray-800 p-4 border-r border-gray-700'>
-        <div className='mb-4 flex gap-2 items-center'>
+      <div className='w-64 bg-gray-800 p-4 border-r border-gray-700 flex flex-col min-h-0'>
+        <div className='mb-4'>
           <input
             type='text'
             value={newListName}
@@ -170,16 +170,16 @@ export default function TodoWidget() {
             className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500'
           />
           <button
-            aria-label='Criar lista'
             type='button'
             onClick={createList}
-            className='px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors'
+            className='mt-2 w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
           >
-            <Plus className='w-4 h-4' />
+            <Plus className='inline-block w-4 h-4 mr-2' />
+            Criar Lista
           </button>
         </div>
 
-        <div className='space-y-2'>
+        <div className='space-y-2 flex-1 overflow-y-auto min-h-0'>
           {lists.map((list) => (
             <div
               key={list._id}
@@ -192,7 +192,8 @@ export default function TodoWidget() {
             >
               <span className='truncate'>{list.name}</span>
               <button
-                aria-label='Deletar lista'
+                type='button'
+                title='Deletar Lista'
                 onClick={(e) => {
                   e.stopPropagation();
                   deleteList(list._id);
@@ -206,10 +207,10 @@ export default function TodoWidget() {
         </div>
       </div>
 
-      <div className='flex-1 p-4 flex flex-col relative'>
+      <div className='flex-1 p-4 flex flex-col min-h-0'>
         {selectedList ? (
           <>
-            <div className='mb-4 flex gap-2 items-center'>
+            <div className='mb-4'>
               <input
                 type='text'
                 value={newItemText}
@@ -219,15 +220,16 @@ export default function TodoWidget() {
                 onKeyPress={(e) => e.key === 'Enter' && addItem()}
               />
               <button
-                aria-label='Adicionar item'
+                type='button'
                 onClick={addItem}
-                className='px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors'
+                className='mt-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors'
               >
-                <Plus className='w-4 h-4' />
+                <Plus className='inline-block w-4 h-4 mr-2' />
+                Adicionar Item
               </button>
             </div>
 
-            <div className='space-y-2 flex-1 overflow-y-auto pb-20'>
+            <div className='space-y-2 flex-1 overflow-y-auto min-h-0'>
               {selectedList.items.map((item, index) => (
                 <div
                   key={index}
@@ -235,25 +237,29 @@ export default function TodoWidget() {
                 >
                   <div className='flex items-center space-x-3'>
                     <button
+                      type='button'
                       onClick={() => toggleItem(index)}
-                      className={`${
-                        item.completed ? 'text-green-500' : 'text-gray-400'
+                      className={`w-6 h-6 rounded-full border-2 flex items-center justify-center ${
+                        item.completed
+                          ? 'bg-green-500 border-green-500'
+                          : 'border-gray-400'
                       }`}
                     >
-                      {item.completed ? <Check /> : <Circle />}
+                      {item.completed && (
+                        <Check className='w-4 h-4 text-white' />
+                      )}
                     </button>
                     <span
                       className={
-                        item.completed
-                          ? 'line-through text-gray-500'
-                          : 'text-white'
+                        item.completed ? 'line-through text-gray-500' : ''
                       }
                     >
                       {item.text}
                     </span>
                   </div>
                   <button
-                    aria-label='Deletar item'
+                    aria-label='Deletar Item'
+                    type='button'
                     onClick={() => deleteItem(index)}
                     className='text-gray-400 hover:text-red-500'
                   >
@@ -261,19 +267,6 @@ export default function TodoWidget() {
                   </button>
                 </div>
               ))}
-            </div>
-
-            <div className='absolute bottom-0 left-0 w-full border-t border-gray-700 p-4'>
-              <div className='flex justify-between text-sm text-gray-400'>
-                <span>
-                  Concluídos:{' '}
-                  {selectedList.items.filter((item) => item.completed).length}
-                </span>
-                <span>
-                  Pendentes:{' '}
-                  {selectedList.items.filter((item) => !item.completed).length}
-                </span>
-              </div>
             </div>
           </>
         ) : (
