@@ -1,19 +1,16 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
+import { TodoList, TodoItem } from '@/types';
 
-export interface ITodoItem extends Document {
-  text: string;
-  completed: boolean;
-  createdAt: Date;
-}
-
-export interface ITodoList extends Document {
-  userId: Types.ObjectId;
-  name: string;
+// Interfaces para uso interno do Mongoose, estendendo as interfaces globais
+export interface ITodoItem extends TodoItem, Document {}
+export interface ITodoList
+  extends Omit<TodoList, '_id' | 'userId' | 'items'>,
+    Document {
+  userId: mongoose.Types.ObjectId;
   items: ITodoItem[];
-  createdAt: Date;
-  updatedAt: Date;
 }
 
+// Schema do item da lista
 const TodoItemSchema = new Schema<ITodoItem>(
   {
     text: {
@@ -31,10 +28,11 @@ const TodoItemSchema = new Schema<ITodoItem>(
   }
 );
 
+// Schema da lista
 const TodoListSchema = new Schema<ITodoList>(
   {
     userId: {
-      type: Types.ObjectId,
+      type: mongoose.Types.ObjectId,
       ref: 'User',
       required: true,
     },
@@ -50,7 +48,6 @@ const TodoListSchema = new Schema<ITodoList>(
   }
 );
 
-// Índices para performance
 TodoListSchema.index({ userId: 1 });
 TodoListSchema.index({ userId: 1, createdAt: -1 });
 
