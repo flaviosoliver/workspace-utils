@@ -6,7 +6,7 @@ export interface TaskDocument extends Omit<ITask, '_id'>, Document {}
 const TaskSchema = new Schema<TaskDocument>(
   {
     userId: {
-      type: Schema.Types.ObjectId,
+      type: Types.ObjectId,
       ref: 'User',
       required: true,
     },
@@ -30,8 +30,16 @@ const TaskSchema = new Schema<TaskDocument>(
       enum: ['low', 'medium', 'high'],
       default: 'medium',
     },
-    dueDate: {
-      type: Date,
+    date: {
+      type: String, // formato YYYY-MM-DD
+      required: true,
+    },
+    time: {
+      type: String, // formato HH:mm
+      required: true,
+    },
+    duration: {
+      type: Number, // minutos
     },
   },
   {
@@ -39,9 +47,8 @@ const TaskSchema = new Schema<TaskDocument>(
   }
 );
 
-// Indexes for better performance
+TaskSchema.index({ userId: 1, date: 1, time: 1 });
 TaskSchema.index({ userId: 1, completed: 1 });
-TaskSchema.index({ userId: 1, dueDate: 1 });
 TaskSchema.index({ userId: 1, priority: 1 });
 
 export default mongoose.models.Task ||

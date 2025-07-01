@@ -1,11 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { connectDB } from '@/lib/mongodb';
-import { Task } from '@/lib/models';
-import { verifyToken } from '@/lib/auth';
+import { cookies } from 'next/headers';
+import { verifyJwt } from '@/lib/auth';
+import Task from '@/lib/models/Task';
+import connectDB from '@/lib/mongodb';
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get('token')?.value;
+    await connectDB();
+
+    const token = (await cookies()).get('auth_token')?.value;
     if (!token) {
       return NextResponse.json(
         { error: 'Token não fornecido' },
@@ -13,16 +16,41 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const decoded = verifyToken(token);
-    if (!decoded) {
+    const decoded = verifyJwt(token);
+    if (!decoded || typeof decoded !== 'object' || !('userId' in decoded)) {
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
-    await connectDB();
-    const tasks = await Task.find({ userId: decoded.userId }).sort({
-      createdAt: -1,
-    });
+    const { searchParams } = new URL(request.url);
+    const view = searchParams.get('view') || 'day';
+    const date = searchParams.get('date'); // formato YYYY-MM-DD
+    const search = searchParams.get('search') || '';
 
+    let filter: any = { userId: decoded.userId };
+
+    const now = new Date();
+    if (view === 'day' && date) {
+      filter.date = date;
+    } else if (view === 'week' && date) {
+      const d = new Date(date);
+      const weekStart = new Date(d.setDate(d.getDate() - d.getDay()));
+      const weekEnd = new Date(d.setDate(weekStart.getDate() + 6));
+      filter.date = {
+        $gte: formatDate(weekStart),
+        $lte: formatDate(weekEnd),
+      };
+    } else if (view === 'month' && date) {
+      const [year, month] = date.split('-');
+      filter.date = { $regex: `^${year}-${month}` };
+    } else {
+      filter.date = formatDate(now);
+    }
+
+    if (search) {
+      filter.title = { $regex: search, $options: 'i' };
+    }
+
+    const tasks = await Task.find(filter).sort({ time: 1, priority: -1 });
     return NextResponse.json({ tasks });
   } catch (error) {
     console.error('Erro ao buscar tarefas:', error);
@@ -33,9 +61,19 @@ export async function GET(request: NextRequest) {
   }
 }
 
+function formatDate(date: Date) {
+  const d = new Date(date);
+  const day = String(d.getDate()).padStart(2, '0');
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const year = d.getFullYear();
+  return `${year}-${month}-${day}`;
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const token = request.cookies.get('token')?.value;
+    await connectDB();
+
+    const token = (await cookies()).get('auth_token')?.value;
     if (!token) {
       return NextResponse.json(
         { error: 'Token não fornecido' },
@@ -43,33 +81,35 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const decoded = verifyToken(token);
-    if (!decoded) {
+    const decoded = verifyJwt(token);
+    if (!decoded || typeof decoded !== 'object' || !('userId' in decoded)) {
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
-    const body = await request.json();
-    const { title, description, priority, dueDate } = body;
+    const { title, description, priority, date, time, duration } =
+      await request.json();
 
-    if (!title) {
+    if (!title || !date || !time || !priority) {
       return NextResponse.json(
-        { error: 'Título é obrigatório' },
+        { error: 'Campos obrigatórios faltando.' },
         { status: 400 }
       );
     }
 
-    await connectDB();
-    const task = new Task({
+    const newTask = {
       userId: decoded.userId,
       title,
       description,
-      priority: priority || 'medium',
-      dueDate,
+      priority,
+      date,
+      time,
+      duration,
       completed: false,
-      createdAt: new Date(),
-    });
+    };
 
-    await task.save();
+    console.log('Criando nova tarefa:', newTask);
+
+    const task = await Task.create(newTask);
 
     return NextResponse.json({ task });
   } catch (error) {
