@@ -12,7 +12,7 @@ interface WindowProps {
 
 const minSizes: Record<string, { width: number; height: number }> = {
   tasks: { width: 560, height: 640 },
-  timer: { width: 250, height: 180 },
+  timer: { width: 350, height: 550 },
   pomodoro: { width: 320, height: 220 },
   todo: { width: 350, height: 400 },
   notes: { width: 400, height: 300 },
