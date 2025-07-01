@@ -87,7 +87,8 @@ export type WidgetType =
   | 'music'
   | 'dataGenerator'
   | 'aiChat'
-  | 'water';
+  | 'water'
+  | 'settings';
 
 export interface Position {
   x: number;

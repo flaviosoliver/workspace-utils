@@ -11,16 +11,16 @@ interface WindowProps {
 }
 
 const minSizes: Record<string, { width: number; height: number }> = {
+  water: { width: 350, height: 640 },
   tasks: { width: 560, height: 640 },
   timer: { width: 350, height: 550 },
-  pomodoro: { width: 350, height: 550 },
+  pomodoro: { width: 350, height: 820 },
   todo: { width: 620, height: 420 },
   notes: { width: 600, height: 400 },
   music: { width: 350, height: 250 },
   dataGenerator: { width: 550, height: 600 },
   aiChat: { width: 400, height: 350 },
-  water: { width: 400, height: 300 },
-  settings: { width: 320, height: 220 },
+  settings: { width: 700, height: 520 },
 };
 
 export default function Window({ widget, children }: WindowProps) {

@@ -9,13 +9,7 @@ interface WaterIntake {
   timestamp: string;
 }
 
-interface WaterReminderWidgetProps {
-  onClose: () => void;
-}
-
-export default function WaterReminderWidget({
-  onClose,
-}: WaterReminderWidgetProps) {
+export default function WaterReminderWidget() {
   const [intakes, setIntakes] = useState<WaterIntake[]>([]);
   const [totalAmount, setTotalAmount] = useState(0);
   const [dailyGoal, setDailyGoal] = useState(2000);
@@ -30,20 +24,15 @@ export default function WaterReminderWidget({
     loadUserPreferences();
   }, []);
 
-  // Atualiza preferências sempre que mudar os estados relevantes
   useEffect(() => {
     saveUserPreferences();
   }, [reminderEnabled, reminderInterval, dailyGoal]);
 
-  // Controla os lembretes
   useEffect(() => {
     if (reminderEnabled && reminderInterval > 0) {
-      const interval = setInterval(
-        () => {
-          showWaterReminder();
-        },
-        reminderInterval * 60 * 1000
-      );
+      const interval = setInterval(() => {
+        showWaterReminder();
+      }, reminderInterval * 60 * 1000);
 
       return () => clearInterval(interval);
     }
@@ -163,18 +152,13 @@ export default function WaterReminderWidget({
 
   return (
     <div className='p-4 h-full flex flex-col'>
-      {/* Cabeçalho */}
       <div className='flex items-center justify-between mb-4'>
         <div className='flex items-center gap-2'>
           <Droplets className='w-5 h-5 text-blue-400' />
           <h3 className='text-lg font-semibold'>Lembrete de Água</h3>
         </div>
-        <button onClick={onClose} className='text-gray-400 hover:text-white'>
-          ✕
-        </button>
       </div>
 
-      {/* Progresso */}
       <div className='mb-6'>
         <div className='flex items-center justify-between mb-2'>
           <span className='text-sm text-gray-300'>Progresso Diário</span>
@@ -193,17 +177,16 @@ export default function WaterReminderWidget({
         </div>
       </div>
 
-      {/* Registrar Consumo */}
       <div className='mb-6'>
         <label className='block text-sm font-medium mb-2'>
           Registrar Consumo (ml)
         </label>
-        <div className='flex gap-2'>
+        <div className='grid grid-cols-2 gap-2 justify-items-center'>
           <input
             type='number'
             value={newAmount}
             onChange={(e) => setNewAmount(e.target.value)}
-            className='flex-1 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white'
+            className='w-28 flex-1 bg-gray-700 border border-gray-600 rounded px-3 py-2 text-white'
             placeholder='250'
             min='1'
             max='2000'
@@ -218,7 +201,7 @@ export default function WaterReminderWidget({
           </button>
         </div>
 
-        <div className='flex gap-2 mt-2'>
+        <div className='flex gap-2 mt-2 justify-center'>
           {[200, 250, 300, 500].map((amount) => (
             <button
               key={amount}
@@ -231,14 +214,13 @@ export default function WaterReminderWidget({
         </div>
       </div>
 
-      {/* Configurações */}
       <div className='mb-6'>
         <h4 className='text-sm font-medium mb-3 flex items-center gap-2'>
           <Clock className='w-4 h-4' />
           Configurações de Lembrete
         </h4>
 
-        <div className='space-y-3'>
+        <div className='space-y-3 space-x-3 justify-self-center'>
           <div className='flex items-center justify-between'>
             <span className='text-sm'>Ativar Lembretes</span>
             <label className='relative inline-flex items-center cursor-pointer'>
@@ -257,7 +239,7 @@ export default function WaterReminderWidget({
             </label>
           </div>
 
-          <div>
+          <div className='inline-block'>
             <label className='block text-sm mb-1'>Meta Diária (ml)</label>
             <input
               type='number'
@@ -269,7 +251,7 @@ export default function WaterReminderWidget({
             />
           </div>
 
-          <div>
+          <div className='inline-block'>
             <label className='block text-sm mb-1'>Intervalo (minutos)</label>
             <input
               type='number'
@@ -285,8 +267,8 @@ export default function WaterReminderWidget({
         </div>
 
         {reminderEnabled && (
-          <div className='mt-3'>
-            <span className='text-sm text-gray-400 block mb-2'>
+          <div className='space-y-3 space-x-3 justify-self-center'>
+            <span className='text-sm text-gray-400 block mb-2 flex items-center justify-between'>
               Adiar próximo lembrete:
             </span>
             <div className='flex gap-2'>
@@ -304,14 +286,13 @@ export default function WaterReminderWidget({
         )}
       </div>
 
-      {/* Histórico */}
-      <div className='flex-1 overflow-hidden'>
+      <div className='flex-1 overflow-y-auto'>
         <h4 className='text-sm font-medium mb-3 flex items-center gap-2'>
           <TrendingUp className='w-4 h-4' />
           Hoje ({intakes.length} registros)
         </h4>
 
-        <div className='space-y-2 max-h-32 overflow-y-auto'>
+        <div className='space-y-2'>
           {intakes.length === 0 ? (
             <p className='text-gray-400 text-sm'>
               Nenhum consumo registrado hoje

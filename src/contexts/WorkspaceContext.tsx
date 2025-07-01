@@ -34,15 +34,16 @@ interface WorkspaceProviderProps {
 }
 
 const defaultWidgetSizes: Record<WidgetType, Size> = {
-  tasks: { width: 400, height: 500 },
-  timer: { width: 300, height: 200 },
-  pomodoro: { width: 350, height: 250 },
-  todo: { width: 400, height: 600 },
-  notes: { width: 500, height: 400 },
-  music: { width: 450, height: 350 },
-  dataGenerator: { width: 400, height: 300 },
-  aiChat: { width: 600, height: 500 },
-  water: { width: 700, height: 500 },
+  water: { width: 350, height: 640 },
+  tasks: { width: 560, height: 640 },
+  timer: { width: 350, height: 550 },
+  pomodoro: { width: 350, height: 820 },
+  todo: { width: 620, height: 420 },
+  notes: { width: 600, height: 400 },
+  music: { width: 350, height: 250 },
+  dataGenerator: { width: 550, height: 600 },
+  aiChat: { width: 400, height: 350 },
+  settings: { width: 700, height: 520 },
 };
 
 const widgetTitles: Record<WidgetType, string> = {
@@ -55,6 +56,7 @@ const widgetTitles: Record<WidgetType, string> = {
   dataGenerator: 'Gerador de Dados',
   aiChat: 'Chat IA',
   water: 'Água',
+  settings: 'Configurações',
 };
 
 export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
@@ -67,7 +69,6 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
   };
 
   const openWidget = (type: WidgetType) => {
-    // Verificar se já existe um widget deste tipo aberto
     const existingWidget = widgets.find(
       (w) => w.type === type && !w.isMinimized
     );
@@ -80,7 +81,6 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     const id = generateWidgetId(type);
     const defaultSize = defaultWidgetSizes[type];
 
-    // Posição inicial com offset para evitar sobreposição
     const offset = widgets.length * 30;
     const position: Position = {
       x: 100 + offset,

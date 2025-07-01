@@ -28,13 +28,7 @@ const WidgetComponents = {
   dataGenerator: () => <DataGeneratorWidget />,
   aiChat: () => <AIChatWidget />,
   settings: () => <SettingsWidget />,
-  water: () => (
-    <WaterReminderWidget
-      onClose={function (): void {
-        throw new Error('Function not implemented.');
-      }}
-    />
-  ),
+  water: () => <WaterReminderWidget />,
 };
 
 export default function WorkspaceLayout() {

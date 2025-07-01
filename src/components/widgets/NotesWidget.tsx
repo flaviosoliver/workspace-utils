@@ -1,7 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Search, Edit, Trash2, Save, X, FileText } from 'lucide-react';
+import {
+  Plus,
+  Search,
+  Edit,
+  Trash2,
+  Save,
+  X,
+  FileText,
+  StickyNote,
+} from 'lucide-react';
 
 interface Note {
   _id: string;
@@ -148,7 +157,10 @@ export default function NotesWidget() {
       <div className='w-1/3 border-r border-gray-700 flex flex-col min-h-0'>
         <div className='p-4 border-b border-gray-700'>
           <div className='flex items-center justify-between mb-3'>
-            <h2 className='text-lg font-semibold text-white'>Notas</h2>
+            <div className='flex items-center gap-2'>
+              <StickyNote className='w-5 h-5 text-blue-400' />
+              <h2 className='text-lg font-semibold text-white'>Notas</h2>
+            </div>
             <button
               aria-label='Criar nova nota'
               onClick={startNewNote}

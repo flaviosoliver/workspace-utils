@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import { WaterIntake } from '@/lib/models';
+import WaterIntake from '@/lib/models/WaterIntake';
 import { verifyToken } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get('token')?.value;
+    const token = request.cookies.get('auth_token')?.value;
     if (!token) {
       return NextResponse.json(
         { error: 'Token não fornecido' },
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const token = request.cookies.get('token')?.value;
+    const token = request.cookies.get('auth_token')?.value;
     if (!token) {
       return NextResponse.json(
         { error: 'Token não fornecido' },

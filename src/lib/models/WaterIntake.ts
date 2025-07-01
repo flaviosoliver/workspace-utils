@@ -1,10 +1,10 @@
-import mongoose, { Schema, Document, Types } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IWaterIntake extends Document {
-  userId: Types.ObjectId;
+  userId: mongoose.Types.ObjectId;
   amount: number; // em ml
   timestamp: Date;
-  date: string; // formato YYYY-MM-DD para facilitar consultas
+  date: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -12,7 +12,7 @@ export interface IWaterIntake extends Document {
 const WaterIntakeSchema = new Schema<IWaterIntake>(
   {
     userId: {
-      type: Types.ObjectId,
+      type: mongoose.Types.ObjectId,
       ref: 'User',
       required: true,
     },
@@ -36,7 +36,6 @@ const WaterIntakeSchema = new Schema<IWaterIntake>(
   }
 );
 
-// Índices para performance
 WaterIntakeSchema.index({ userId: 1, date: 1 });
 WaterIntakeSchema.index({ userId: 1, timestamp: -1 });
 

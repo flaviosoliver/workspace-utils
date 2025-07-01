@@ -279,7 +279,7 @@ export default function PomodoroWidget() {
         </div>
       )}
 
-      <div className='flex-1 flex flex-col items-center justify-center'>
+      <div className='flex-1 flex flex-col items-center justify-center overflow-y-auto min-h-0'>
         <div
           className={`relative mb-6 p-6 rounded-full border-4 ${phaseInfo.borderColor} ${phaseInfo.bgColor}`}
         >
