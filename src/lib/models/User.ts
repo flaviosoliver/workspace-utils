@@ -1,8 +1,8 @@
+import bcrypt from 'bcryptjs';
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IUser extends Document {
   email: string;
-  username: string;
   name: string;
   password: string;
   isVerified: boolean;
@@ -47,14 +47,6 @@ const UserSchema = new Schema<IUser>(
       unique: true,
       lowercase: true,
       trim: true,
-    },
-    username: {
-      type: String,
-      required: true,
-      unique: true,
-      trim: true,
-      minlength: 3,
-      maxlength: 30,
     },
     name: {
       type: String,
@@ -175,11 +167,28 @@ const UserSchema = new Schema<IUser>(
   }
 );
 
-// Índices para performance
-UserSchema.index({ email: 1 });
-UserSchema.index({ username: 1 });
-UserSchema.index({ verificationToken: 1 });
-UserSchema.index({ resetPasswordToken: 1 });
+UserSchema.pre('save', async function (next) {
+  if (!this.isModified('password')) return next();
+
+  try {
+    const salt = await bcrypt.genSalt(12);
+    this.password = await bcrypt.hash(this.password, salt);
+    next();
+  } catch (error) {
+    next(error as mongoose.CallbackError);
+  }
+});
+
+UserSchema.methods.comparePassword = async function (
+  candidatePassword: string
+): Promise<boolean> {
+  return bcrypt.compare(candidatePassword, this.password);
+};
+
+UserSchema.methods.updatePassword = async function (newPassword: string) {
+  this.password = newPassword;
+  return this.save();
+};
 
 export default mongoose.models.User ||
   mongoose.model<IUser>('User', UserSchema);

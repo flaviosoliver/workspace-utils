@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import { User } from '@/lib/models';
-import { verifyPassword, generateToken } from '@/lib/auth';
+import User from '@/lib/models/User';
+import { verifyPassword, signJwt } from '@/lib/auth';
+import { cookies } from 'next/headers';
 
 export async function POST(request: NextRequest) {
   try {
@@ -9,7 +10,6 @@ export async function POST(request: NextRequest) {
 
     const { email, password } = await request.json();
 
-    // Validação básica
     if (!email || !password) {
       return NextResponse.json(
         { error: 'Email e password são obrigatórios' },
@@ -17,38 +17,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Buscar usuário
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Credenciais inválidas' },
+        { error: 'Usuário não encontrado.' },
         { status: 401 }
       );
     }
 
-    // Verificar senha
     const isValidPassword = await verifyPassword(password, user.password);
 
     if (!isValidPassword) {
-      return NextResponse.json(
-        { error: 'Credenciais inválidas' },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: 'Senha incorreta.' }, { status: 401 });
     }
 
-    // Gerar token
-    const token = generateToken(user._id.toString());
+    const token = signJwt({ userId: user._id, email: user.email });
 
-    // Retornar dados do usuário (sem senha)
+    (await cookies()).set('auth_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7,
+    });
+
     const userResponse = {
       _id: user._id,
       email: user.email,
-      username: user.username,
-      preferences: user.preferences,
-      apiKeys: user.apiKeys,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
+      name: user.name,
+      isVerified: user.isVerified,
     };
 
     return NextResponse.json({

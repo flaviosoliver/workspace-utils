@@ -58,14 +58,12 @@ export default function Sidebar() {
 
   return (
     <div className='fixed left-0 top-0 h-full w-16 bg-gray-900 border-r border-gray-700 flex flex-col items-center py-4 z-50'>
-      {/* Logo/Avatar */}
       <div className='w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mb-6'>
         <span className='text-white font-bold text-sm'>
-          {user?.username?.charAt(0).toUpperCase() || 'W'}
+          {user?.name?.charAt(0).toUpperCase() || 'W'}
         </span>
       </div>
 
-      {/* Widget Icons */}
       <div className='flex flex-col space-y-2 flex-1'>
         {(Object.keys(widgetIcons) as WidgetType[]).map((type) => {
           const Icon = widgetIcons[type];
@@ -88,12 +86,10 @@ export default function Sidebar() {
             >
               <Icon className='w-6 h-6' />
 
-              {/* Tooltip */}
               <div className='absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50'>
                 {widgetLabels[type]}
               </div>
 
-              {/* Active indicator */}
               {isActive && (
                 <div className='absolute -left-1 top-1/2 transform -translate-y-1/2 w-1 h-6 bg-blue-400 rounded-r'></div>
               )}
@@ -102,7 +98,6 @@ export default function Sidebar() {
         })}
       </div>
 
-      {/* Bottom Actions */}
       <div className='flex flex-col space-y-2'>
         <button
           onClick={() => handleWidgetClick('settings' as WidgetType)}

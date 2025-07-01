@@ -10,26 +10,46 @@ interface WindowProps {
   children: ReactNode;
 }
 
+const minSizes: Record<string, { width: number; height: number }> = {
+  tasks: { width: 560, height: 640 },
+  timer: { width: 250, height: 180 },
+  pomodoro: { width: 320, height: 220 },
+  todo: { width: 350, height: 400 },
+  notes: { width: 400, height: 300 },
+  music: { width: 350, height: 250 },
+  dataGenerator: { width: 320, height: 220 },
+  aiChat: { width: 400, height: 350 },
+  water: { width: 400, height: 300 },
+  settings: { width: 320, height: 220 },
+};
+
 export default function Window({ widget, children }: WindowProps) {
-  const { 
-    closeWidget, 
-    minimizeWidget, 
-    maximizeWidget, 
-    updateWidgetPosition, 
-    updateWidgetSize, 
-    bringToFront 
+  const {
+    closeWidget,
+    minimizeWidget,
+    maximizeWidget,
+    updateWidgetPosition,
+    updateWidgetSize,
+    bringToFront,
   } = useWorkspace();
-  
+
   const [isDragging, setIsDragging] = useState(false);
   const [isResizing, setIsResizing] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
-  const [resizeStart, setResizeStart] = useState({ x: 0, y: 0, width: 0, height: 0 });
-  
+  const [resizeStart, setResizeStart] = useState({
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+  });
+
   const windowRef = useRef<HTMLDivElement>(null);
 
-  // Handle mouse down on title bar for dragging
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (e.target === e.currentTarget || (e.target as HTMLElement).closest('.window-title')) {
+    if (
+      e.target === e.currentTarget ||
+      (e.target as HTMLElement).closest('.window-title')
+    ) {
       setIsDragging(true);
       setDragOffset({
         x: e.clientX - widget.position.x,
@@ -39,7 +59,6 @@ export default function Window({ widget, children }: WindowProps) {
     }
   };
 
-  // Handle mouse down on resize handle
   const handleResizeMouseDown = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsResizing(true);
@@ -52,23 +71,24 @@ export default function Window({ widget, children }: WindowProps) {
     bringToFront(widget.id);
   };
 
-  // Handle mouse move for dragging and resizing
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
       if (isDragging) {
         const newX = Math.max(0, e.clientX - dragOffset.x);
         const newY = Math.max(0, e.clientY - dragOffset.y);
-        
+
         updateWidgetPosition(widget.id, { x: newX, y: newY });
       }
-      
+
       if (isResizing) {
         const deltaX = e.clientX - resizeStart.x;
         const deltaY = e.clientY - resizeStart.y;
-        
-        const newWidth = Math.max(200, resizeStart.width + deltaX);
-        const newHeight = Math.max(150, resizeStart.height + deltaY);
-        
+
+        const minWidth = minSizes[widget.type]?.width ?? 200;
+        const minHeight = minSizes[widget.type]?.height ?? 150;
+        const newWidth = Math.max(minWidth, resizeStart.width + deltaX);
+        const newHeight = Math.max(minHeight, resizeStart.height + deltaY);
+
         updateWidgetSize(widget.id, { width: newWidth, height: newHeight });
       }
     };
@@ -81,13 +101,24 @@ export default function Window({ widget, children }: WindowProps) {
     if (isDragging || isResizing) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
-      
+
       return () => {
         document.removeEventListener('mousemove', handleMouseMove);
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, isResizing, dragOffset, resizeStart, widget.id, updateWidgetPosition, updateWidgetSize]);
+  }, [
+    isDragging,
+    isResizing,
+    dragOffset,
+    resizeStart,
+    widget.id,
+    updateWidgetPosition,
+    updateWidgetSize,
+  ]);
+
+  const minWidth = minSizes[widget.type]?.width ?? 200;
+  const minHeight = minSizes[widget.type]?.height ?? 150;
 
   const windowStyle = widget.isMaximized
     ? {
@@ -102,8 +133,8 @@ export default function Window({ widget, children }: WindowProps) {
         position: 'absolute' as const,
         left: widget.position.x,
         top: widget.position.y,
-        width: widget.size.width,
-        height: widget.size.height,
+        width: Math.max(minWidth, widget.size.width),
+        height: Math.max(minHeight, widget.size.height),
         zIndex: widget.zIndex,
       };
 
@@ -111,69 +142,76 @@ export default function Window({ widget, children }: WindowProps) {
     <div
       ref={windowRef}
       style={windowStyle}
-      className="bg-gray-800 border border-gray-600 rounded-lg shadow-2xl overflow-hidden select-none"
+      className='bg-gray-800 border border-gray-600 rounded-lg shadow-2xl overflow-hidden select-none'
       onClick={() => bringToFront(widget.id)}
     >
-      {/* Title Bar */}
       <div
-        className="bg-gray-700 px-4 py-2 flex items-center justify-between cursor-move border-b border-gray-600"
+        className='bg-gray-700 px-4 py-2 flex items-center justify-between cursor-move border-b border-gray-600'
         onMouseDown={handleMouseDown}
       >
-        <div className="window-title flex items-center space-x-2">
-          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-          <span className="text-white text-sm font-medium ml-2">{widget.title}</span>
+        <div className='window-title flex items-center space-x-2'>
+          <div className='w-3 h-3 bg-red-500 rounded-full'></div>
+          <div className='w-3 h-3 bg-yellow-500 rounded-full'></div>
+          <div className='w-3 h-3 bg-green-500 rounded-full'></div>
+          <span className='text-white text-sm font-medium ml-2'>
+            {widget.title}
+          </span>
         </div>
-        
-        <div className="flex items-center space-x-1">
+
+        <div className='flex items-center space-x-1'>
           <button
+            aria-label='Minimize'
             onClick={(e) => {
               e.stopPropagation();
               minimizeWidget(widget.id);
             }}
-            className="w-6 h-6 rounded hover:bg-gray-600 flex items-center justify-center text-gray-300 hover:text-white transition-colors"
+            className='w-6 h-6 rounded hover:bg-gray-600 flex items-center justify-center text-gray-300 hover:text-white transition-colors'
           >
-            <Minus className="w-4 h-4" />
+            <Minus className='w-4 h-4' />
           </button>
-          
+
           <button
             onClick={(e) => {
               e.stopPropagation();
               maximizeWidget(widget.id);
             }}
-            className="w-6 h-6 rounded hover:bg-gray-600 flex items-center justify-center text-gray-300 hover:text-white transition-colors"
+            className='w-6 h-6 rounded hover:bg-gray-600 flex items-center justify-center text-gray-300 hover:text-white transition-colors'
           >
-            {widget.isMaximized ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+            {widget.isMaximized ? (
+              <Minimize2 className='w-4 h-4' />
+            ) : (
+              <Maximize2 className='w-4 h-4' />
+            )}
           </button>
-          
+
           <button
+            aria-label='Fechar'
             onClick={(e) => {
               e.stopPropagation();
               closeWidget(widget.id);
             }}
-            className="w-6 h-6 rounded hover:bg-red-600 flex items-center justify-center text-gray-300 hover:text-white transition-colors"
+            className='w-6 h-6 rounded hover:bg-red-600 flex items-center justify-center text-gray-300 hover:text-white transition-colors'
           >
-            <X className="w-4 h-4" />
+            <X className='w-4 h-4' />
           </button>
         </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-hidden" style={{ height: 'calc(100% - 40px)' }}>
+      <div
+        className='flex-1 overflow-hidden'
+        style={{ height: 'calc(100% - 40px)' }}
+      >
         {children}
       </div>
 
-      {/* Resize Handle */}
       {!widget.isMaximized && (
         <div
-          className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"
+          className='absolute bottom-0 right-0 w-4 h-4 cursor-se-resize'
           onMouseDown={handleResizeMouseDown}
         >
-          <div className="absolute bottom-1 right-1 w-2 h-2 border-r-2 border-b-2 border-gray-500"></div>
+          <div className='absolute bottom-1 right-1 w-2 h-2 border-r-2 border-b-2 border-gray-500'></div>
         </div>
       )}
     </div>
   );
 }
-

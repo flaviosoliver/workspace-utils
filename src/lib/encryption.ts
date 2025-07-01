@@ -1,48 +1,47 @@
-import CryptoJS from 'crypto-js';
+import crypto from 'crypto';
 
-const ENCRYPTION_KEY =
-  process.env.ENCRYPTION_KEY || 'default-key-change-in-production';
+const algorithm = 'aes-256-cbc';
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
+const IV_LENGTH = 16;
 
-export function encryptData(data: string): string {
-  try {
-    // Usando Base64 SHA256 conforme especificado
-    const hash = CryptoJS.SHA256(data).toString(CryptoJS.enc.Base64);
-    return hash;
-  } catch (error) {
-    console.error('Erro ao encriptar dados:', error);
-    throw new Error('Falha na encriptação');
-  }
+if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length !== 44) {
+  throw new Error(
+    'ENCRYPTION_KEY invalid. Must be 44 characters long (32 bytes in Base64)'
+  );
 }
 
-export function encryptToken(token: string): string {
-  try {
-    // Encriptação AES para tokens (reversível)
-    const encrypted = CryptoJS.AES.encrypt(token, ENCRYPTION_KEY).toString();
-    return encrypted;
-  } catch (error) {
-    console.error('Erro ao encriptar token:', error);
-    throw new Error('Falha na encriptação do token');
-  }
+const key = crypto.createHash('sha256').update(ENCRYPTION_KEY).digest();
+
+export function encrypt(text: string): string {
+  if (!text) return '';
+  const iv = crypto.randomBytes(IV_LENGTH);
+  const cipher = crypto.createCipheriv(algorithm, key, iv);
+  let encrypted = cipher.update(text);
+  encrypted = Buffer.concat([encrypted, cipher.final()]);
+  return iv.toString('hex') + ':' + encrypted.toString('hex');
 }
 
-export function decryptToken(encryptedToken: string): string {
-  try {
-    // Descriptografia AES para tokens
-    const bytes = CryptoJS.AES.decrypt(encryptedToken, ENCRYPTION_KEY);
-    const decrypted = bytes.toString(CryptoJS.enc.Utf8);
-    return decrypted;
-  } catch (error) {
-    console.error('Erro ao descriptografar token:', error);
-    throw new Error('Falha na descriptografia do token');
-  }
-}
-
-export function generateSecureToken(): string {
-  // Gera um token seguro para verificação de e-mail
-  return CryptoJS.lib.WordArray.random(32).toString();
+export function decrypt(text: string): string {
+  if (!text) return '';
+  const textParts = text.split(':');
+  const iv = Buffer.from(textParts.shift()!, 'hex');
+  const encryptedText = Buffer.from(textParts.join(':'), 'hex');
+  const decipher = crypto.createDecipheriv(algorithm, key, iv);
+  let decrypted = decipher.update(encryptedText);
+  decrypted = Buffer.concat([decrypted, decipher.final()]);
+  return decrypted.toString();
 }
 
 export function hashPassword(password: string): string {
-  // Hash da senha usando SHA256 + Base64
-  return CryptoJS.SHA256(password).toString(CryptoJS.enc.Base64);
+  const salt = crypto.randomBytes(16).toString('base64');
+  const hash = crypto
+    .createHash('sha256')
+    .update(password + salt)
+    .digest('base64');
+  const crypt = salt + hash;
+  return crypt;
+}
+
+export function generateSecureToken(): string {
+  return crypto.randomBytes(32).toString('hex');
 }

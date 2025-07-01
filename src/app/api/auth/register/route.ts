@@ -1,18 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import { User } from '@/lib/models';
-import { hashPassword, generateSecureToken } from '@/lib/encryption';
-import { sendVerificationEmail } from '@/lib/email';
+import User from '@/lib/models/User';
+import { encrypt } from '@/lib/encryption';
+import nodemailer from 'nodemailer';
 
-export async function POST(request: NextRequest) {
+const transporter = nodemailer.createTransport({
+  host: process.env.ZOHOMAIL_HOST,
+  port: Number(process.env.ZOHOMAIL_PORT),
+  secure: process.env.ZOHOMAIL_SECURE === 'true',
+  auth: {
+    user: process.env.ZOHOMAIL_USER,
+    pass: process.env.ZOHOMAIL_PASS,
+  },
+});
+
+export async function POST(request: Request) {
   try {
     await connectDB();
+    const { email, name, password, confirmPassword } = await request.json();
 
-    const { email, username, name, password, confirmPassword } =
-      await request.json();
-
-    // Validações
-    if (!email || !username || !name || !password || !confirmPassword) {
+    if (!email || !name || !password || !confirmPassword) {
       return NextResponse.json(
         { error: 'Todos os campos são obrigatórios' },
         { status: 400 }
@@ -33,9 +40,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar se email já existe
     const existingUserByEmail = await User.findOne({
-      email: email.toLowerCase(),
+      email: email.toLowerCase().trim(),
     });
     if (existingUserByEmail) {
       return NextResponse.json(
@@ -44,28 +50,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verificar se username já existe
-    const existingUserByUsername = await User.findOne({ username });
-    if (existingUserByUsername) {
-      return NextResponse.json(
-        { error: 'Este nome de usuário já está em uso' },
-        { status: 400 }
-      );
-    }
+    const verificationToken = encrypt(
+      JSON.stringify({
+        email: email.toLowerCase().trim(),
+        expires: Date.now() + 24 * 60 * 60 * 1000,
+      })
+    );
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    // Hash da senha
-    const hashedPassword = hashPassword(password);
-
-    // Gerar token de verificação
-    const verificationToken = generateSecureToken();
-    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000); // 24 horas
-
-    // Criar usuário
     const user = new User({
-      email: email.toLowerCase(),
-      username,
+      email: email.toLowerCase().trim(),
       name,
-      password: hashedPassword,
+      password,
       isVerified: false,
       verificationToken,
       verificationTokenExpires,
@@ -73,32 +69,45 @@ export async function POST(request: NextRequest) {
 
     await user.save();
 
-    // Enviar e-mail de verificação
-    // try {
-    //   await sendVerificationEmail(email, verificationToken, name);
-    // } catch (emailError) {
-    //   console.error('Erro ao enviar e-mail de verificação:', emailError);
-    //   // Não falhar o registro se o e-mail não for enviado
-    // }
+    async function sendMail(to: string, subject: string, html: string) {
+      await transporter.sendMail({
+        from: `"Workspace Utils" <${process.env.ZOHOMAIL_USER}>`,
+        to,
+        subject,
+        html,
+      });
+    }
+
+    await sendMail(
+      email,
+      'Verifique seu e-mail',
+      `
+      <p>Olá ${name},</p>
+      <p>Por favor, para concluir a inscrição, verifique seu e-mail clicando no link abaixo:</p>
+      <a href="${process.env.NEXTAUTH_URL}/verify-email?token=${verificationToken}">
+      Verificar E-mail
+      </a>
+      <br />
+      <p>Se você não se inscreveu, ignore este e-mail.</p>
+      <p>Se o link não funcionar, copie e cole a URL abaixo no seu navegador:</p>
+      <p>${process.env.NEXTAUTH_URL}/verify-email?token=${verificationToken}</p>
+      <p>Obrigado por se inscrever!</p>
+      <br />
+      <p>Este link expirará em 24 horas.</p>
+    `
+    );
 
     return NextResponse.json(
       {
         message:
           'Usuário criado com sucesso! Verifique seu e-mail para ativar a conta.',
-        user: {
-          id: user._id,
-          email: user.email,
-          username: user.username,
-          name: user.name,
-          isVerified: user.isVerified,
-        },
       },
       { status: 201 }
     );
   } catch (error) {
-    console.error('Erro no registro:', error);
+    console.error('Error creating user:', error);
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

@@ -1,14 +1,24 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from 'react';
 import { User } from '@/types';
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, username: string, password: string) => Promise<void>;
-  logout: () => void;
+  register: (
+    email: string,
+    name: string,
+    password: string,
+    confirmPassword: string
+  ) => Promise<void>;
+  logout: () => Promise<void>;
   loading: boolean;
   error: string | null;
 }
@@ -29,41 +39,27 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Verificar se há token salvo no localStorage
   useEffect(() => {
-    const savedToken = localStorage.getItem('auth_token');
-    if (savedToken) {
-      setToken(savedToken);
-      fetchUser(savedToken);
-    } else {
-      setLoading(false);
-    }
+    fetchUser();
   }, []);
 
-  const fetchUser = async (authToken: string) => {
+  const fetchUser = async () => {
     try {
       const response = await fetch('/api/auth/me', {
-        headers: {
-          'Authorization': `Bearer ${authToken}`,
-        },
+        credentials: 'include',
       });
 
       if (response.ok) {
         const data = await response.json();
         setUser(data.user);
       } else {
-        // Token inválido, remover
-        localStorage.removeItem('auth_token');
-        setToken(null);
+        setUser(null);
       }
     } catch (error) {
-      console.error('Erro ao buscar usuário:', error);
-      localStorage.removeItem('auth_token');
-      setToken(null);
+      setUser(null);
     } finally {
       setLoading(false);
     }
@@ -79,6 +75,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include',
         body: JSON.stringify({ email, password }),
       });
 
@@ -86,8 +83,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       if (response.ok) {
         setUser(data.user);
-        setToken(data.token);
-        localStorage.setItem('auth_token', data.token);
       } else {
         setError(data.error || 'Erro no login');
       }
@@ -98,7 +93,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const register = async (email: string, username: string, password: string) => {
+  const register = async (
+    email: string,
+    name: string,
+    password: string,
+    confirmPassword: string
+  ) => {
     setLoading(true);
     setError(null);
 
@@ -108,15 +108,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ email, username, password }),
+        credentials: 'include',
+        body: JSON.stringify({ email, name, password, confirmPassword }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
         setUser(data.user);
-        setToken(data.token);
-        localStorage.setItem('auth_token', data.token);
       } else {
         setError(data.error || 'Erro no registro');
       }
@@ -127,15 +126,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    setLoading(true);
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch {}
     setUser(null);
-    setToken(null);
-    localStorage.removeItem('auth_token');
+    setLoading(false);
   };
 
   const value = {
     user,
-    token,
     login,
     register,
     logout,
@@ -143,10 +147,5 @@ export function AuthProvider({ children }: AuthProviderProps) {
     error,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
-
