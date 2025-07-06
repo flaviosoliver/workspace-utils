@@ -1,7 +1,6 @@
 import mongoose, { Schema, Document } from 'mongoose';
 import { TodoList, TodoItem } from '@/types';
 
-// Interfaces para uso interno do Mongoose, estendendo as interfaces globais
 export interface ITodoItem extends TodoItem, Document {}
 export interface ITodoList
   extends Omit<TodoList, '_id' | 'userId' | 'items'>,
@@ -10,7 +9,6 @@ export interface ITodoList
   items: ITodoItem[];
 }
 
-// Schema do item da lista
 const TodoItemSchema = new Schema<ITodoItem>(
   {
     text: {
@@ -28,7 +26,6 @@ const TodoItemSchema = new Schema<ITodoItem>(
   }
 );
 
-// Schema da lista
 const TodoListSchema = new Schema<ITodoList>(
   {
     userId: {

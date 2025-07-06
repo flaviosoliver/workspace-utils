@@ -27,16 +27,6 @@ export function decrypt(text: string) {
   return decrypted.toString();
 }
 
-export function hashPassword(password: string): string {
-  const salt = crypto.randomBytes(16).toString('base64');
-  const hash = crypto
-    .createHash('sha256')
-    .update(password + salt)
-    .digest('base64');
-  const crypt = salt + hash;
-  return crypt;
-}
-
 export function generateSecureToken(): string {
   return crypto.randomBytes(32).toString('hex');
 }

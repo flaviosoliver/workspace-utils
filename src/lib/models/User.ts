@@ -33,17 +33,17 @@ interface IUser extends Document {
       accessToken?: string;
       refreshToken?: string;
       expiresAt?: Date;
-    },
+    };
     youtube?: {
       accessToken?: string;
       refreshToken?: string;
       expiresAt?: Date;
-    },
+    };
     youtubeMusic?: {
       accessToken?: string;
       refreshToken?: string;
       expiresAt?: Date;
-    }
+    };
   };
   createdAt: Date;
   updatedAt: Date;
@@ -180,18 +180,6 @@ const UserSchema = new Schema<IUser>(
     timestamps: true,
   }
 );
-
-UserSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
-
-  try {
-    const salt = await bcrypt.genSalt(12);
-    this.password = await bcrypt.hash(this.password, salt);
-    next();
-  } catch (error) {
-    next(error as mongoose.CallbackError);
-  }
-});
 
 UserSchema.methods.comparePassword = async function (
   candidatePassword: string

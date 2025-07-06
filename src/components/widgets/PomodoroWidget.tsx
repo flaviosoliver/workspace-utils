@@ -6,7 +6,7 @@ import { Play, Pause, RotateCcw, Coffee, Brain, Settings } from 'lucide-react';
 type PomodoroPhase = 'work' | 'shortBreak' | 'longBreak';
 
 interface PomodoroSettings {
-  workDuration: number; // em minutos
+  workDuration: number;
   shortBreakDuration: number;
   longBreakDuration: number;
   sessionsUntilLongBreak: number;

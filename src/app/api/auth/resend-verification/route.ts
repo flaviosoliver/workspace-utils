@@ -1,18 +1,8 @@
 import connectDB from '@/lib/mongodb';
 import User from '@/lib/models/User';
 import { encrypt } from '@/lib/encryption';
-import nodemailer from 'nodemailer';
 import { NextResponse } from 'next/server';
-
-const transporter = nodemailer.createTransport({
-  host: process.env.ZOHOMAIL_HOST,
-  port: Number(process.env.ZOHOMAIL_PORT),
-  secure: process.env.ZOHOMAIL_SECURE === 'true',
-  auth: {
-    user: process.env.ZOHOMAIL_USER,
-    pass: process.env.ZOHOMAIL_PASS,
-  },
-});
+import { sendVerificationEmail } from '@/lib/email';
 
 export async function POST(request: Request) {
   try {
@@ -49,25 +39,15 @@ export async function POST(request: Request) {
     user.verificationTokenExpires = verificationTokenExpires;
     await user.save();
 
-    await transporter.sendMail({
-      from: `Workspace Utils <${process.env.ZOHOMAIL_USER}>`,
-      to: user.email,
-      subject: 'Verifique seu e-mail',
-      html: `
-        <p>Olá ${user.name},</p>
-        <p>Por favor, para concluir a inscrição, verifique seu e-mail clicando no link abaixo:</p>
-        <a href="${process.env.NEXTAUTH_URL}/verify-email?token=${verificationToken}">
-        Verificar E-mail
-        </a>
-        <br />
-        <p>Se você não se inscreveu, ignore este e-mail.</p>
-        <p>Se o link não funcionar, copie e cole a URL abaixo no seu navegador:</p>
-        <p>${process.env.NEXTAUTH_URL}/verify-email?token=${verificationToken}</p>
-        <p>Obrigado por se inscrever!</p>
-        <br />
-        <p>Este link expirará em 24 horas.</p>
-      `,
-    });
+    try {
+      await sendVerificationEmail(user.email, verificationToken, user.name);
+    } catch (error) {
+      console.error('Erro ao enviar e-mail de verificação:', error);
+      return NextResponse.json(
+        { error: 'Erro ao enviar e-mail de verificação' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,

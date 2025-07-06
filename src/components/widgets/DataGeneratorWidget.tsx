@@ -14,7 +14,6 @@ import {
   Circle,
 } from 'lucide-react';
 
-// Dados mock para geração de pessoas e endereços
 const firstNames = [
   'Ana',
   'Bruno',
@@ -81,7 +80,6 @@ export default function DataGeneratorWidget() {
   const [selectedType, setSelectedType] = useState('password');
   const [quantity, setQuantity] = useState(1);
 
-  // Opções de senha
   const [passwordOptions, setPasswordOptions] = useState<PasswordOptions>({
     length: 12,
     uppercase: true,
@@ -94,7 +92,6 @@ export default function DataGeneratorWidget() {
     excludeChars: '',
   });
 
-  // Opções de Lorem Ipsum
   const [loremOptions, setLoremOptions] = useState<LoremOptions>({
     type: 'paragraphs',
     count: 3,
@@ -123,7 +120,6 @@ export default function DataGeneratorWidget() {
     if (options.numbers) chars += numberChars;
     if (options.special) chars += specialChars;
 
-    // Remover caracteres ambíguos se solicitado
     if (options.avoidAmbiguous) {
       chars = chars
         .split('')
@@ -131,7 +127,6 @@ export default function DataGeneratorWidget() {
         .join('');
     }
 
-    // Remover caracteres excluídos
     if (options.excludeChars) {
       chars = chars
         .split('')
@@ -143,7 +138,6 @@ export default function DataGeneratorWidget() {
     let numbersCount = 0;
     let specialCount = 0;
 
-    // Garantir número mínimo de números
     while (numbersCount < options.minNumbers) {
       password += numberChars.charAt(
         Math.floor(Math.random() * numberChars.length)
@@ -151,7 +145,6 @@ export default function DataGeneratorWidget() {
       numbersCount++;
     }
 
-    // Garantir número mínimo de caracteres especiais
     while (specialCount < options.minSpecial) {
       password += specialChars.charAt(
         Math.floor(Math.random() * specialChars.length)
@@ -159,12 +152,10 @@ export default function DataGeneratorWidget() {
       specialCount++;
     }
 
-    // Preencher o resto da senha
     while (password.length < options.length) {
       password += chars.charAt(Math.floor(Math.random() * chars.length));
     }
 
-    // Embaralhar a senha
     return password
       .split('')
       .sort(() => Math.random() - 0.5)
@@ -211,7 +202,6 @@ export default function DataGeneratorWidget() {
 
     const digits = generate12Digits();
 
-    // Multiplicadores para o 1º e 2º dígito
     const multipliers1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
     const multipliers2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
 
@@ -224,7 +214,6 @@ export default function DataGeneratorWidget() {
       .replace(/^(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})$/, '$1.$2.$3/$4-$5');
   };
 
-  // Função utilitária para gerar uma data aleatória entre dois limites
   const generateRandomDate = (start: Date, end: Date) => {
     return new Date(
       start.getTime() + Math.random() * (end.getTime() - start.getTime())
@@ -388,6 +377,7 @@ export default function DataGeneratorWidget() {
     <div className='p-2 space-y-4 h-full flex flex-col'>
       <div className='grid p-4 gap-4 grid-cols-3 items-center'>
         <select
+          aria-label='Tipo de dado'
           value={selectedType}
           onChange={(e) => setSelectedType(e.target.value)}
           className='px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white'
@@ -437,6 +427,7 @@ export default function DataGeneratorWidget() {
           <div>
             <label className='block mb-2'>Comprimento</label>
             <input
+              aria-label='Comprimento'
               type='number'
               min='4'
               max='64'
@@ -510,6 +501,7 @@ export default function DataGeneratorWidget() {
             <div>
               <label className='block mb-2'>Mínimo de Números</label>
               <input
+                aria-label='Mínimo de Números'
                 type='number'
                 min='0'
                 max={passwordOptions.length}
@@ -531,6 +523,7 @@ export default function DataGeneratorWidget() {
                 Mínimo de Caracteres Especiais
               </label>
               <input
+                aria-label='Mínimo de Caracteres Especiais'
                 type='number'
                 min='0'
                 max={passwordOptions.length}
@@ -583,6 +576,7 @@ export default function DataGeneratorWidget() {
       {selectedType === 'lorem' && (
         <div className='flex gap-4 bg-gray-800 p-4 rounded-lg'>
           <select
+            aria-label='Tipo de Lorem Ipsum'
             value={loremOptions.type}
             onChange={(e) =>
               setLoremOptions({
@@ -598,6 +592,7 @@ export default function DataGeneratorWidget() {
           </select>
 
           <input
+            aria-label='Quantidade'
             type='number'
             min='1'
             max='10'
@@ -634,6 +629,8 @@ export default function DataGeneratorWidget() {
                 </span>
               </div>
               <button
+                aria-label='Copiar'
+                type='button'
                 onClick={() =>
                   copyToClipboard(
                     typeof item.data === 'string'

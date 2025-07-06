@@ -1,18 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/lib/models/User';
 import { encrypt } from '@/lib/encryption';
-import nodemailer from 'nodemailer';
-
-const transporter = nodemailer.createTransport({
-  host: process.env.ZOHOMAIL_HOST,
-  port: Number(process.env.ZOHOMAIL_PORT),
-  secure: process.env.ZOHOMAIL_SECURE === 'true',
-  auth: {
-    user: process.env.ZOHOMAIL_USER,
-    pass: process.env.ZOHOMAIL_PASS,
-  },
-});
+import { sendRegisterEmail } from '@/lib/email';
+import { hashPassword } from '@/lib/auth';
 
 export async function POST(request: Request) {
   try {
@@ -67,35 +58,19 @@ export async function POST(request: Request) {
       verificationTokenExpires,
     });
 
+    user.password = await hashPassword(password);
+
     await user.save();
 
-    async function sendMail(to: string, subject: string, html: string) {
-      await transporter.sendMail({
-        from: `"Workspace Utils" <${process.env.ZOHOMAIL_USER}>`,
-        to,
-        subject,
-        html,
-      });
+    try {
+      await sendRegisterEmail(user.email, verificationToken, user.name);
+    } catch (emailError) {
+      console.error('Erro ao enviar e-mail de ativação:', emailError);
+      return NextResponse.json(
+        { error: 'Erro ao enviar e-mail de ativação' },
+        { status: 500 }
+      );
     }
-
-    await sendMail(
-      email,
-      'Verifique seu e-mail',
-      `
-      <p>Olá ${name},</p>
-      <p>Por favor, para concluir a inscrição, verifique seu e-mail clicando no link abaixo:</p>
-      <a href="${process.env.NEXTAUTH_URL}/verify-email?token=${verificationToken}">
-      Verificar E-mail
-      </a>
-      <br />
-      <p>Se você não se inscreveu, ignore este e-mail.</p>
-      <p>Se o link não funcionar, copie e cole a URL abaixo no seu navegador:</p>
-      <p>${process.env.NEXTAUTH_URL}/verify-email?token=${verificationToken}</p>
-      <p>Obrigado por se inscrever!</p>
-      <br />
-      <p>Este link expirará em 24 horas.</p>
-    `
-    );
 
     return NextResponse.json(
       {
@@ -105,9 +80,9 @@ export async function POST(request: Request) {
       { status: 201 }
     );
   } catch (error) {
-    console.error('Error creating user:', error);
+    console.error('Erro na criação do usuário:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Erro interno do servidor' },
       { status: 500 }
     );
   }

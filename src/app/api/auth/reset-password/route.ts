@@ -1,61 +1,79 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import User from '@/lib/models/User';
-import { hashPassword } from '@/lib/encryption';
+import { hashPassword } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
     await connectDB();
 
-    const { token, password, confirmPassword } = await request.json();
+    const { token, password } = await request.json();
 
-    if (!token || !password || !confirmPassword) {
+    if (!token || !password) {
       return NextResponse.json(
-        { error: 'Todos os campos são obrigatórios' },
-        { status: 400 }
-      );
-    }
-
-    if (password !== confirmPassword) {
-      return NextResponse.json(
-        { error: 'As senhas não coincidem' },
-        { status: 400 }
-      );
-    }
-
-    if (password.length < 6) {
-      return NextResponse.json(
-        { error: 'A senha deve ter pelo menos 6 caracteres' },
+        { error: 'Token e senha são obrigatórios' },
         { status: 400 }
       );
     }
 
     const user = await User.findOne({
       resetPasswordToken: token,
-      resetPasswordTokenExpires: { $gt: new Date() },
+      resetPasswordTokenExpires: { $gt: Date.now() },
     });
 
     if (!user) {
       return NextResponse.json(
-        { error: 'Token de redefinição inválido ou expirado' },
+        { error: 'Token inválido ou expirado' },
         { status: 400 }
       );
     }
 
-    const hashedPassword = hashPassword(password);
-    user.password = hashedPassword;
+    user.password = await hashPassword(password);
     user.resetPasswordToken = undefined;
     user.resetPasswordTokenExpires = undefined;
     await user.save();
 
-    return NextResponse.json({
-      message:
-        'Senha redefinida com sucesso! Você pode fazer login com sua nova senha.',
-    });
+    return NextResponse.json({ message: 'Senha atualizada com sucesso' });
   } catch (error) {
-    console.error('Erro na redefinição de senha:', error);
+    console.error('Erro ao redefinir senha:', error);
     return NextResponse.json(
-      { error: 'Erro interno do servidor' },
+      { error: 'Erro ao processar solicitação' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function GET(request: NextRequest) {
+  try {
+    await connectDB();
+
+    const { searchParams } = new URL(request.url);
+    const token = searchParams.get('token');
+
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Token é obrigatório' },
+        { status: 400 }
+      );
+    }
+
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordTokenExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'Token inválido ou expirado' },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({ valid: true });
+  } catch (error) {
+    console.error('Erro ao validar token:', error);
+    return NextResponse.json(
+      { error: 'Erro ao processar solicitação' },
       { status: 500 }
     );
   }
