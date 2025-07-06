@@ -1,6 +1,8 @@
 import crypto from 'crypto';
 
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY!.padEnd(32, '0');
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY
+  ? process.env.ENCRYPTION_KEY.padEnd(32, '0').slice(0, 32)
+  : crypto.randomBytes(32).toString('hex').slice(0, 32);
 const IV_LENGTH = 16;
 
 export function encrypt(text: string) {
