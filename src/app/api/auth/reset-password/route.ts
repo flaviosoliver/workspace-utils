@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import { User } from '@/lib/models';
+import User from '@/lib/models/User';
 import { hashPassword } from '@/lib/encryption';
 
 export async function POST(request: NextRequest) {
@@ -9,7 +9,6 @@ export async function POST(request: NextRequest) {
 
     const { token, password, confirmPassword } = await request.json();
 
-    // Validações
     if (!token || !password || !confirmPassword) {
       return NextResponse.json(
         { error: 'Todos os campos são obrigatórios' },
@@ -31,7 +30,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Buscar usuário pelo token
     const user = await User.findOne({
       resetPasswordToken: token,
       resetPasswordTokenExpires: { $gt: new Date() },
@@ -44,7 +42,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Atualizar senha
     const hashedPassword = hashPassword(password);
     user.password = hashedPassword;
     user.resetPasswordToken = undefined;

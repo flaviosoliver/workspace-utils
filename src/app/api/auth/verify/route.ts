@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import { User } from '@/lib/models';
+import User from '@/lib/models/User';
 
 export async function GET(request: NextRequest) {
   try {
@@ -16,7 +16,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Buscar usuário pelo token
     const user = await User.findOne({
       verificationToken: token,
       verificationTokenExpires: { $gt: new Date() },
@@ -29,7 +28,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Verificar a conta
     user.isVerified = true;
     user.verificationToken = undefined;
     user.verificationTokenExpires = undefined;

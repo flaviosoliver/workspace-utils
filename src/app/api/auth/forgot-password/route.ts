@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import { User } from '@/lib/models';
+import User from '@/lib/models/User';
 import { generateSecureToken } from '@/lib/encryption';
 import { sendPasswordResetEmail } from '@/lib/email';
 
@@ -16,28 +16,22 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-
-    // Buscar usuário pelo e-mail
     const user = await User.findOne({ email: email.toLowerCase() });
 
     if (!user) {
-      // Por segurança, sempre retornar sucesso mesmo se o e-mail não existir
       return NextResponse.json({
         message:
           'Se o e-mail estiver cadastrado, você receberá um link para redefinir sua senha.',
       });
     }
 
-    // Gerar token de redefinição
     const resetToken = generateSecureToken();
-    const resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000); // 1 hora
+    const resetTokenExpires = new Date(Date.now() + 60 * 60 * 1000);
 
-    // Salvar token no usuário
     user.resetPasswordToken = resetToken;
     user.resetPasswordTokenExpires = resetTokenExpires;
     await user.save();
 
-    // Enviar e-mail de redefinição
     try {
       await sendPasswordResetEmail(user.email, resetToken, user.name);
     } catch (emailError) {
