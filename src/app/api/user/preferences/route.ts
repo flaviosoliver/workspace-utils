@@ -1,53 +1,31 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { verifyJwt } from '@/lib/auth';
+import User from '@/lib/models/User';
 import connectDB from '@/lib/mongodb';
-import { User } from '@/lib/models';
-import { verifyToken, extractTokenFromRequest } from '@/lib/auth';
 
-export async function PATCH(request: NextRequest) {
+export async function PUT(request: NextRequest) {
   try {
     await connectDB();
 
-    // Extrair token do header
-    const token = extractTokenFromRequest(request);
-
+    const token = (await cookies()).get('auth_token')?.value;
     if (!token) {
       return NextResponse.json(
-        { error: 'Token de acesso não fornecido' },
+        { error: 'Token não fornecido' },
         { status: 401 }
       );
     }
 
-    // Verificar token
-    const decoded = verifyToken(token);
-
-    if (!decoded) {
+    const decoded = verifyJwt(token);
+    if (!decoded || typeof decoded !== 'object' || !('userId' in decoded)) {
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
-    const updates = await request.json();
-
-    // Validar campos permitidos
-    const allowedFields = ['theme', 'language', 'timezone', 'notifications'];
-    const preferences: any = {};
-
-    Object.keys(updates).forEach((key) => {
-      if (allowedFields.includes(key)) {
-        preferences[`preferences.${key}`] = updates[key];
-      }
-    });
-
-    if (Object.keys(preferences).length === 0) {
-      return NextResponse.json(
-        { error: 'Nenhum campo válido fornecido' },
-        { status: 400 }
-      );
-    }
-
-    // Atualizar usuário
+    const { preferences } = await request.json();
     const user = await User.findByIdAndUpdate(
       decoded.userId,
-      { $set: preferences },
-      { new: true, runValidators: true }
+      { preferences },
+      { new: true }
     ).select('-password');
 
     if (!user) {
@@ -57,21 +35,9 @@ export async function PATCH(request: NextRequest) {
       );
     }
 
-    return NextResponse.json({
-      message: 'Preferências atualizadas com sucesso',
-      user: {
-        _id: user._id,
-        email: user.email,
-        username: user.username,
-        preferences: user.preferences,
-        apiKeys: user.apiKeys,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      },
-    });
+    return NextResponse.json({ user });
   } catch (error) {
     console.error('Erro ao atualizar preferências:', error);
-
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }

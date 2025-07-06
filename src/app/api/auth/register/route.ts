@@ -1,78 +1,86 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
-import { User } from '@/lib/models';
-import { hashPassword, generateToken } from '@/lib/auth';
+import User from '@/lib/models/User';
+import { encrypt } from '@/lib/encryption';
+import { sendRegisterEmail } from '@/lib/email';
+import { hashPassword } from '@/lib/auth';
 
-export async function POST(request: NextRequest) {
+export async function POST(request: Request) {
   try {
     await connectDB();
+    const { email, name, password, confirmPassword } = await request.json();
 
-    const { email, username, password } = await request.json();
-
-    // Validação básica
-    if (!email || !username || !password) {
+    if (!email || !name || !password || !confirmPassword) {
       return NextResponse.json(
-        { error: 'Email, username e password são obrigatórios' },
+        { error: 'Todos os campos são obrigatórios' },
+        { status: 400 }
+      );
+    }
+
+    if (password !== confirmPassword) {
+      return NextResponse.json(
+        { error: 'As senhas não coincidem' },
         { status: 400 }
       );
     }
 
     if (password.length < 6) {
       return NextResponse.json(
-        { error: 'Password deve ter pelo menos 6 caracteres' },
+        { error: 'A senha deve ter pelo menos 6 caracteres' },
         { status: 400 }
       );
     }
 
-    // Verificar se usuário já existe
-    const existingUser = await User.findOne({
-      $or: [{ email }, { username }],
+    const existingUserByEmail = await User.findOne({
+      email: email.toLowerCase().trim(),
     });
-
-    if (existingUser) {
+    if (existingUserByEmail) {
       return NextResponse.json(
-        { error: 'Email ou username já está em uso' },
-        { status: 409 }
+        { error: 'Este e-mail já está cadastrado' },
+        { status: 400 }
       );
     }
 
-    // Hash da senha
-    const hashedPassword = await hashPassword(password);
+    const verificationToken = encrypt(
+      JSON.stringify({
+        email: email.toLowerCase().trim(),
+        expires: Date.now() + 24 * 60 * 60 * 1000,
+      })
+    );
+    const verificationTokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-    // Criar usuário
     const user = new User({
-      email,
-      username,
-      password: hashedPassword,
+      email: email.toLowerCase().trim(),
+      name,
+      password,
+      isVerified: false,
+      verificationToken,
+      verificationTokenExpires,
     });
+
+    user.password = await hashPassword(password);
 
     await user.save();
 
-    // Gerar token
-    const token = generateToken(user._id.toString());
-
-    // Retornar dados do usuário (sem senha)
-    const userResponse = {
-      _id: user._id,
-      email: user.email,
-      username: user.username,
-      preferences: user.preferences,
-      apiKeys: user.apiKeys,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-    };
+    try {
+      await sendRegisterEmail(user.email, verificationToken, user.name);
+    } catch (emailError) {
+      console.error('Erro ao enviar e-mail de ativação:', emailError);
+      return NextResponse.json(
+        { error: 'Erro ao enviar e-mail de ativação' },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json(
       {
-        message: 'Usuário criado com sucesso',
-        user: userResponse,
-        token,
+        message:
+          'Usuário criado com sucesso! Verifique seu e-mail para ativar a conta.',
       },
       { status: 201 }
     );
   } catch (error) {
-    console.error('Erro no registro:', error);
-
+    console.error('Erro na criação do usuário:', error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }

@@ -1,68 +1,228 @@
-import mongoose, { Schema, Document } from 'mongoose';
-import { User as IUser, UserPreferences, ApiKeys } from '@/types';
+import { IUser, ThemeName } from '@/types';
+import bcrypt from 'bcryptjs';
+import mongoose, { Schema, Document, Model } from 'mongoose';
 
-export interface UserDocument extends Omit<IUser, '_id'>, Document {}
+interface UserDocument extends Omit<IUser, '_id'>, Document {
+  email: string;
+  name: string;
+  password: string;
+  isVerified: boolean;
+  verificationToken?: string;
+  verificationTokenExpires?: Date;
+  resetPasswordToken?: string;
+  resetPasswordTokenExpires?: Date;
+  preferences: {
+    theme: ThemeName;
+    language: string;
+    timezone: string;
+    notifications: boolean;
+    waterReminder: {
+      enabled: boolean;
+      dailyGoal: number; // em ml
+      interval: number; // em minutos
+    };
+  };
+  apiTokens: {
+    openai?: string;
+    anthropic?: string;
+    google?: string;
+    deepseek?: string;
+    qwen?: string;
+    spotify?: {
+      clientId?: string;
+      clientSecret?: string;
+      accessToken?: string;
+      refreshToken?: string;
+      expiresAt?: Date;
+    };
+    youtube?: {
+      accessToken?: string;
+      refreshToken?: string;
+      expiresAt?: Date;
+    };
+    youtubeMusic?: {
+      accessToken?: string;
+      refreshToken?: string;
+      expiresAt?: Date;
+    };
+  };
+  createdAt: Date;
+  updatedAt: Date;
+}
 
-const ApiKeysSchema = new Schema<ApiKeys>({
-  openai: { type: String },
-  anthropic: { type: String },
-  google: { type: String },
-  deepseek: { type: String },
-  qwen: { type: String },
-  spotify: {
-    clientId: { type: String },
-    clientSecret: { type: String },
-  },
-  youtube: { type: String },
-}, { _id: false });
+interface UserMethods {
+  comparePassword(candidatePassword: string): Promise<boolean>;
+  updatePassword(newPassword: string): Promise<UserDocument>;
+  toJSON(): Record<string, any>;
+  save(): Promise<UserDocument>;
+}
 
-const UserPreferencesSchema = new Schema<UserPreferences>({
-  theme: { 
-    type: String, 
-    enum: ['oneDark', 'dracula', 'monokai', 'light'], 
-    default: 'oneDark' 
-  },
-  language: { type: String, default: 'pt-BR' },
-  timezone: { type: String, default: 'America/Sao_Paulo' },
-  notifications: { type: Boolean, default: true },
-}, { _id: false });
+type UserModel = Model<UserDocument, Record<string, never>, UserMethods>;
 
-const UserSchema = new Schema<UserDocument>({
-  email: { 
-    type: String, 
-    required: true, 
-    unique: true,
-    lowercase: true,
-    trim: true,
+const UserSchema = new Schema<UserDocument, UserModel, UserMethods>(
+  {
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true,
+    },
+    name: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    password: {
+      type: String,
+      required: true,
+      minlength: 6,
+    },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationToken: {
+      type: String,
+      sparse: true,
+    },
+    verificationTokenExpires: {
+      type: Date,
+    },
+    resetPasswordToken: {
+      type: String,
+      sparse: true,
+    },
+    resetPasswordTokenExpires: {
+      type: Date,
+    },
+    preferences: {
+      theme: {
+        type: String,
+        enum: [
+          'oneDark',
+          'dracula',
+          'monokai',
+          'light',
+          'cyberpunk',
+          'solarized',
+          'synthwave',
+        ],
+        default: 'oneDark',
+      },
+      language: {
+        type: String,
+        default: 'pt-BR',
+      },
+      timezone: {
+        type: String,
+        default: 'America/Sao_Paulo',
+      },
+      notifications: {
+        type: Boolean,
+        default: true,
+      },
+      waterReminder: {
+        enabled: {
+          type: Boolean,
+          default: false,
+        },
+        dailyGoal: {
+          type: Number,
+          default: 2000, // 2 litros em ml
+        },
+        interval: {
+          type: Number,
+          default: 60, // 1 hora em minutos
+        },
+      },
+    },
+    apiTokens: {
+      openai: {
+        type: String,
+        default: '',
+      },
+      anthropic: {
+        type: String,
+        default: '',
+      },
+      google: {
+        type: String,
+        default: '',
+      },
+      deepseek: {
+        type: String,
+        default: '',
+      },
+      qwen: {
+        type: String,
+        default: '',
+      },
+      spotify: {
+        clientId: {
+          type: String,
+          default: '',
+        },
+        clientSecret: {
+          type: String,
+          default: '',
+        },
+        accessToken: {
+          type: String,
+          default: '',
+        },
+        refreshToken: {
+          type: String,
+          default: '',
+        },
+      },
+      youtube: {
+        type: String,
+        default: '',
+      },
+      ytmusic: {
+        type: String,
+        default: '',
+      },
+    },
   },
-  username: { 
-    type: String, 
-    required: true, 
-    unique: true,
-    trim: true,
-    minlength: 3,
-    maxlength: 30,
-  },
-  password: { 
-    type: String, 
-    required: true,
-    minlength: 6,
-  },
-  preferences: { 
-    type: UserPreferencesSchema, 
-    default: () => ({}) 
-  },
-  apiKeys: { 
-    type: ApiKeysSchema, 
-    default: () => ({}) 
-  },
-}, {
-  timestamps: true,
+  {
+    timestamps: true,
+  }
+);
+
+UserSchema.method(
+  'comparePassword',
+  async function (candidatePassword: string) {
+    return bcrypt.compare(candidatePassword, this.password);
+  }
+);
+
+UserSchema.method('updatePassword', async function (newPassword: string) {
+  this.password = newPassword;
+  return this.save();
 });
 
-// Index for better performance
-UserSchema.index({ email: 1 });
-UserSchema.index({ username: 1 });
+UserSchema.method('toJSON', function () {
+  const userObject = this.toObject();
+  delete userObject.password;
+  return userObject;
+});
 
-export default mongoose.models.User || mongoose.model<UserDocument>('User', UserSchema);
+// UserSchema.method('save', async function (user: UserDocument) {
 
+// }
+
+UserSchema.virtual('id').get(function (this: UserDocument) {
+  return (this._id as mongoose.Types.ObjectId).toHexString();
+});
+
+UserSchema.set('toJSON', {
+  virtuals: true,
+});
+
+const User: UserModel =
+  mongoose.models.User ||
+  mongoose.model<UserDocument, UserModel>('User', UserSchema);
+
+export default User;

@@ -65,6 +65,9 @@ export const themes: Record<ThemeName, Theme> = {
       warning: '#D97706',
     },
   },
+  cyberpunk: undefined,
+  solarized: undefined,
+  synthwave: undefined,
 };
 
 export const getTheme = (themeName: ThemeName): Theme => {

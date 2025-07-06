@@ -7,6 +7,7 @@ import SettingsWidget from './SettingsWidget';
 import TasksWidget from './TasksWidget';
 import TimerWidget from './TimerWidget';
 import TodoWidget from './TodoWidget';
+import WaterReminderWidget from './WaterReminderWidget';
 
 export {
   SettingsWidget,
@@ -18,4 +19,5 @@ export {
   MusicWidget,
   DataGeneratorWidget,
   AIChatWidget,
+  WaterReminderWidget,
 };

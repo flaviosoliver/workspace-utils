@@ -15,12 +15,16 @@ interface WorkspaceContextType {
   bringToFront: (id: string) => void;
 }
 
-const WorkspaceContext = createContext<WorkspaceContextType | undefined>(undefined);
+const WorkspaceContext = createContext<WorkspaceContextType | undefined>(
+  undefined
+);
 
 export function useWorkspace() {
   const context = useContext(WorkspaceContext);
   if (context === undefined) {
-    throw new Error('useWorkspace deve ser usado dentro de um WorkspaceProvider');
+    throw new Error(
+      'useWorkspace deve ser usado dentro de um WorkspaceProvider'
+    );
   }
   return context;
 }
@@ -30,15 +34,16 @@ interface WorkspaceProviderProps {
 }
 
 const defaultWidgetSizes: Record<WidgetType, Size> = {
-  tasks: { width: 400, height: 500 },
-  timer: { width: 300, height: 200 },
-  pomodoro: { width: 350, height: 250 },
-  todo: { width: 400, height: 600 },
-  notes: { width: 500, height: 400 },
-  music: { width: 450, height: 350 },
-  dataGenerator: { width: 400, height: 300 },
-  aiChat: { width: 600, height: 500 },
-  settings: { width: 700, height: 500 },
+  water: { width: 350, height: 640 },
+  tasks: { width: 560, height: 640 },
+  timer: { width: 350, height: 550 },
+  pomodoro: { width: 350, height: 820 },
+  todo: { width: 620, height: 420 },
+  notes: { width: 600, height: 400 },
+  music: { width: 350, height: 250 },
+  dataGenerator: { width: 550, height: 600 },
+  aiChat: { width: 400, height: 350 },
+  settings: { width: 700, height: 520 },
 };
 
 const widgetTitles: Record<WidgetType, string> = {
@@ -50,6 +55,7 @@ const widgetTitles: Record<WidgetType, string> = {
   music: 'Player de Música',
   dataGenerator: 'Gerador de Dados',
   aiChat: 'Chat IA',
+  water: 'Água',
   settings: 'Configurações',
 };
 
@@ -63,9 +69,10 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
   };
 
   const openWidget = (type: WidgetType) => {
-    // Verificar se já existe um widget deste tipo aberto
-    const existingWidget = widgets.find(w => w.type === type && !w.isMinimized);
-    
+    const existingWidget = widgets.find(
+      (w) => w.type === type && !w.isMinimized
+    );
+
     if (existingWidget) {
       bringToFront(existingWidget.id);
       return;
@@ -73,8 +80,7 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
 
     const id = generateWidgetId(type);
     const defaultSize = defaultWidgetSizes[type];
-    
-    // Posição inicial com offset para evitar sobreposição
+
     const offset = widgets.length * 30;
     const position: Position = {
       x: 100 + offset,
@@ -92,56 +98,58 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
       zIndex: nextZIndex,
     };
 
-    setWidgets(prev => [...prev, newWidget]);
-    setActiveWidgets(prev => [...prev, id]);
-    setNextZIndex(prev => prev + 1);
+    setWidgets((prev) => [...prev, newWidget]);
+    setActiveWidgets((prev) => [...prev, id]);
+    setNextZIndex((prev) => prev + 1);
   };
 
   const closeWidget = (id: string) => {
-    setWidgets(prev => prev.filter(w => w.id !== id));
-    setActiveWidgets(prev => prev.filter(wId => wId !== id));
+    setWidgets((prev) => prev.filter((w) => w.id !== id));
+    setActiveWidgets((prev) => prev.filter((wId) => wId !== id));
   };
 
   const minimizeWidget = (id: string) => {
-    setWidgets(prev => prev.map(w => 
-      w.id === id ? { ...w, isMinimized: true } : w
-    ));
-    setActiveWidgets(prev => prev.filter(wId => wId !== id));
+    setWidgets((prev) =>
+      prev.map((w) => (w.id === id ? { ...w, isMinimized: true } : w))
+    );
+    setActiveWidgets((prev) => prev.filter((wId) => wId !== id));
   };
 
   const maximizeWidget = (id: string) => {
-    setWidgets(prev => prev.map(w => 
-      w.id === id ? { 
-        ...w, 
-        isMaximized: !w.isMaximized,
-        isMinimized: false 
-      } : w
-    ));
-    
+    setWidgets((prev) =>
+      prev.map((w) =>
+        w.id === id
+          ? {
+              ...w,
+              isMaximized: !w.isMaximized,
+              isMinimized: false,
+            }
+          : w
+      )
+    );
+
     if (!activeWidgets.includes(id)) {
-      setActiveWidgets(prev => [...prev, id]);
+      setActiveWidgets((prev) => [...prev, id]);
     }
-    
+
     bringToFront(id);
   };
 
   const updateWidgetPosition = (id: string, position: Position) => {
-    setWidgets(prev => prev.map(w => 
-      w.id === id ? { ...w, position } : w
-    ));
+    setWidgets((prev) =>
+      prev.map((w) => (w.id === id ? { ...w, position } : w))
+    );
   };
 
   const updateWidgetSize = (id: string, size: Size) => {
-    setWidgets(prev => prev.map(w => 
-      w.id === id ? { ...w, size } : w
-    ));
+    setWidgets((prev) => prev.map((w) => (w.id === id ? { ...w, size } : w)));
   };
 
   const bringToFront = (id: string) => {
-    setWidgets(prev => prev.map(w => 
-      w.id === id ? { ...w, zIndex: nextZIndex } : w
-    ));
-    setNextZIndex(prev => prev + 1);
+    setWidgets((prev) =>
+      prev.map((w) => (w.id === id ? { ...w, zIndex: nextZIndex } : w))
+    );
+    setNextZIndex((prev) => prev + 1);
   };
 
   const value = {
@@ -162,4 +170,3 @@ export function WorkspaceProvider({ children }: WorkspaceProviderProps) {
     </WorkspaceContext.Provider>
   );
 }
-

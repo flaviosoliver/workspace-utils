@@ -1,46 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { verifyJwt } from '@/lib/auth';
+import User from '@/lib/models/User';
 import connectDB from '@/lib/mongodb';
-import { User } from '@/lib/models';
-import { verifyToken, extractTokenFromRequest } from '@/lib/auth';
 
 export async function GET(request: NextRequest) {
   try {
     await connectDB();
 
-    // Extrair token do header
-    const token = extractTokenFromRequest(request);
+    const token = (await cookies()).get('auth_token')?.value;
 
     if (!token) {
-      return NextResponse.json(
-        { error: 'Token de acesso não fornecido' },
-        { status: 401 }
-      );
+      return NextResponse.json({ user: null }, { status: 401 });
     }
 
-    // Verificar token
-    const decoded = verifyToken(token);
-
-    if (!decoded) {
-      return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
+    const decoded = verifyJwt(token);
+    if (!decoded || typeof decoded !== 'object' || !('userId' in decoded)) {
+      return NextResponse.json({ user: null }, { status: 401 });
     }
 
-    // Buscar usuário
     const user = await User.findById(decoded.userId).select('-password');
-
     if (!user) {
-      return NextResponse.json(
-        { error: 'Usuário não encontrado' },
-        { status: 404 }
-      );
+      return NextResponse.json({ user: null }, { status: 401 });
     }
 
     return NextResponse.json({
       user: {
         _id: user._id,
         email: user.email,
-        username: user.username,
+        name: user.name,
         preferences: user.preferences,
-        apiKeys: user.apiKeys,
+        apiTokens: user.apiTokens,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       },

@@ -1,11 +1,15 @@
-// User types
-export interface User {
+export interface IUser {
   _id: string;
   email: string;
-  username: string;
+  name: string;
   password?: string;
+  isVerified: boolean;
+  verificationToken?: string;
+  verificationTokenExpires?: Date;
+  resetPasswordToken?: string;
+  resetPasswordTokenExpires?: Date;
   preferences: UserPreferences;
-  apiKeys: ApiKeys;
+  apiTokens: ApiTokens;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -15,23 +19,46 @@ export interface UserPreferences {
   language: string;
   timezone: string;
   notifications: boolean;
+  waterReminder: {
+    enabled: boolean;
+    dailyGoal: number;
+    interval: number;
+  };
 }
 
-export interface ApiKeys {
+export interface ApiTokens {
   openai?: string;
   anthropic?: string;
   google?: string;
   deepseek?: string;
   qwen?: string;
   spotify?: {
-    clientId: string;
-    clientSecret: string;
+    clientId?: string;
+    clientSecret?: string;
+    accessToken?: string;
+    refreshToken?: string;
+    expiresAt?: Date;
   };
-  youtube?: string;
+  youtube?: {
+    accessToken?: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+  };
+  youtubeMusic?: {
+    accessToken?: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+  };
 }
 
-// Theme types
-export type ThemeName = 'oneDark' | 'dracula' | 'monokai' | 'light';
+export type ThemeName =
+  | 'oneDark'
+  | 'dracula'
+  | 'monokai'
+  | 'light'
+  | 'cyberpunk'
+  | 'solarized'
+  | 'synthwave';
 
 export interface Theme {
   name: ThemeName;
@@ -50,7 +77,6 @@ export interface Theme {
   };
 }
 
-// Widget types
 export interface Widget {
   id: string;
   type: WidgetType;
@@ -71,6 +97,7 @@ export type WidgetType =
   | 'music'
   | 'dataGenerator'
   | 'aiChat'
+  | 'water'
   | 'settings';
 
 export interface Position {
@@ -83,21 +110,21 @@ export interface Size {
   height: number;
 }
 
-// Task types
-export interface Task {
+export interface ITask {
   _id: string;
   userId: string;
   title: string;
   description?: string;
-  completed: boolean;
+  date: string; // formato YYYY-MM-DD
+  time: string; // formato HH:mm
+  duration: number; // minutos
   priority: 'low' | 'medium' | 'high';
-  dueDate?: Date;
+  completed: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
 
-// Note types
-export interface Note {
+export interface INote {
   _id: string;
   userId: string;
   title: string;
@@ -107,7 +134,31 @@ export interface Note {
   updatedAt: Date;
 }
 
-// Timer types
+export interface ITodoItem {
+  text: string;
+  completed: boolean;
+  createdAt: Date;
+}
+
+export interface ITodoList {
+  _id: string;
+  userId: string;
+  name: string;
+  items: ITodoItem[];
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface IWaterIntake {
+  _id: string;
+  userId: string;
+  amount: number;
+  timestamp: Date;
+  date: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface TimerState {
   isRunning: boolean;
   timeLeft: number;
@@ -115,7 +166,6 @@ export interface TimerState {
   type: 'timer' | 'pomodoro';
 }
 
-// AI Chat types
 export interface ChatMessage {
   id: string;
   role: 'user' | 'assistant';
@@ -140,7 +190,6 @@ export type AIProvider =
   | 'manus'
   | 'perplexity';
 
-// Music types
 export interface Track {
   id: string;
   title: string;
@@ -159,7 +208,6 @@ export interface Playlist {
   source: 'youtube' | 'spotify' | 'youtubeMusic';
 }
 
-// Data Generator types
 export interface FakeDataConfig {
   type: 'person' | 'address' | 'company' | 'product' | 'custom';
   count: number;

@@ -1,14 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { verifyJwt } from '@/lib/auth';
+import Task from '@/lib/models/Task';
 import connectDB from '@/lib/mongodb';
-import { Task } from '@/lib/models';
-import { verifyToken } from '@/lib/auth';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string[] }> }
 ) {
   try {
-    const token = request.cookies.get('token')?.value;
+    await connectDB();
+
+    const token = (await cookies()).get('auth_token')?.value;
     if (!token) {
       return NextResponse.json(
         { error: 'Token não fornecido' },
@@ -16,16 +19,20 @@ export async function PUT(
       );
     }
 
-    const decoded = verifyToken(token);
-    if (!decoded) {
+    const decoded = verifyJwt(token);
+    if (!decoded || typeof decoded !== 'object' || !('userId' in decoded)) {
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
     const body = await request.json();
-    const { id } = params;
 
-    await connectDB();
-    const task = await Task.findOne({ _id: id, userId: decoded.userId });
+    const id = (await params).id[0];
+
+    const task = await Task.findOneAndUpdate(
+      { _id: id, userId: decoded.userId },
+      { $set: body },
+      { new: true }
+    );
 
     if (!task) {
       return NextResponse.json(
@@ -33,9 +40,6 @@ export async function PUT(
         { status: 404 }
       );
     }
-
-    Object.assign(task, body);
-    await task.save();
 
     return NextResponse.json({ task });
   } catch (error) {
@@ -49,10 +53,12 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string[] }> }
 ) {
   try {
-    const token = request.cookies.get('token')?.value;
+    await connectDB();
+
+    const token = (await cookies()).get('auth_token')?.value;
     if (!token) {
       return NextResponse.json(
         { error: 'Token não fornecido' },
@@ -60,14 +66,13 @@ export async function DELETE(
       );
     }
 
-    const decoded = verifyToken(token);
-    if (!decoded) {
+    const decoded = verifyJwt(token);
+    if (!decoded || typeof decoded !== 'object' || !('userId' in decoded)) {
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
-    const { id } = params;
+    const id = (await params).id[0];
 
-    await connectDB();
     const task = await Task.findOneAndDelete({
       _id: id,
       userId: decoded.userId,

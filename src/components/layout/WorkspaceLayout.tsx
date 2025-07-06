@@ -13,11 +13,11 @@ import {
   DataGeneratorWidget,
   AIChatWidget,
   SettingsWidget,
+  WaterReminderWidget,
 } from '@/components/widgets';
 import { Sidebar } from '@/components/layout';
 import { Window } from '@/components/ui';
 
-// Widget components
 const WidgetComponents = {
   tasks: () => <TasksWidget />,
   timer: () => <TimerWidget />,
@@ -28,6 +28,7 @@ const WidgetComponents = {
   dataGenerator: () => <DataGeneratorWidget />,
   aiChat: () => <AIChatWidget />,
   settings: () => <SettingsWidget />,
+  water: () => <WaterReminderWidget />,
 };
 
 export default function WorkspaceLayout() {
@@ -48,12 +49,9 @@ export default function WorkspaceLayout() {
 
   return (
     <div className='min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 overflow-hidden'>
-      {/* Sidebar */}
       <Sidebar />
 
-      {/* Main Workspace Area */}
       <div className='ml-16 h-screen relative'>
-        {/* Background Pattern */}
         <div className='absolute inset-0 opacity-5'>
           <div
             className='absolute inset-0'
@@ -67,12 +65,11 @@ export default function WorkspaceLayout() {
           ></div>
         </div>
 
-        {/* Welcome Message */}
         {activeWidgets.length === 0 && (
           <div className='absolute inset-0 flex items-center justify-center'>
             <div className='text-center'>
               <h1 className='text-4xl font-bold text-white mb-4'>
-                Bem-vindo, {user.username}!
+                Bem-vindo, {user.name}!
               </h1>
               <p className='text-gray-400 text-lg mb-8'>
                 Clique nos ícones da barra lateral para abrir os widgets
@@ -87,7 +84,6 @@ export default function WorkspaceLayout() {
           </div>
         )}
 
-        {/* Windows */}
         {widgets
           .filter((widget) => activeWidgets.includes(widget.id))
           .map((widget) => {

@@ -1,39 +1,55 @@
-import mongoose, { Schema, Document } from 'mongoose';
-import { Note as INote } from '@/types';
+import mongoose, { Schema, Document, Model } from 'mongoose';
+import { INote } from '@/types';
 
-export interface NoteDocument extends Omit<INote, '_id'>, Document {}
+export interface NoteDocument extends Omit<INote, '_id' | 'userId'>, Document {
+  userId: mongoose.Schema.Types.ObjectId;
+}
 
-const NoteSchema = new Schema<NoteDocument>({
-  userId: { 
-    type: Schema.Types.ObjectId, 
-    ref: 'User', 
-    required: true 
+interface NoteMethods {
+  isOwner(userId: string): boolean;
+}
+
+type NoteModel = Model<NoteDocument, Record<string, never>, NoteMethods>;
+
+const NoteSchema = new Schema<NoteDocument, NoteModel, NoteMethods>(
+  {
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true,
+    },
+    title: {
+      type: String,
+      required: true,
+    },
+    content: {
+      type: String,
+      required: true,
+    },
+    tags: {
+      type: [String],
+      default: [],
+    },
   },
-  title: { 
-    type: String, 
-    required: true,
-    trim: true,
-    maxlength: 200,
-  },
-  content: { 
-    type: String,
-    required: true,
-    maxlength: 10000,
-  },
-  tags: [{ 
-    type: String,
-    trim: true,
-    lowercase: true,
-    maxlength: 50,
-  }],
-}, {
-  timestamps: true,
+  {
+    timestamps: true,
+  }
+);
+
+NoteSchema.method('isOwner', function (userId: string) {
+  return this.get('userId').toString() === userId;
 });
 
-// Indexes for better performance
-NoteSchema.index({ userId: 1 });
-NoteSchema.index({ userId: 1, tags: 1 });
-NoteSchema.index({ title: 'text', content: 'text' });
+NoteSchema.virtual('id').get(function () {
+  return (this._id as mongoose.Types.ObjectId).toHexString();
+});
 
-export default mongoose.models.Note || mongoose.model<NoteDocument>('Note', NoteSchema);
+NoteSchema.set('toJSON', {
+  virtuals: true,
+});
 
+const Note: NoteModel =
+  mongoose.models.Note ||
+  mongoose.model<NoteDocument, NoteModel>('Note', NoteSchema);
+
+export default Note;
