@@ -1,406 +1,326 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Play, Pause, SkipBack, SkipForward, Volume2, VolumeX, Search, Music, ExternalLink, Heart, Shuffle, Repeat } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import YouTube from 'react-youtube';
+import SpotifyPlayer from 'react-spotify-web-playback';
+import { FaSpotify, FaYoutube, FaMusic } from 'react-icons/fa';
+
+type StreamingService = 'spotify' | 'youtube' | 'youtubeMusic';
 
 interface Track {
   id: string;
   title: string;
   artist: string;
-  duration: string;
+  uri?: string;
   thumbnail?: string;
-  url?: string;
-  platform: 'youtube' | 'spotify' | 'local';
 }
 
 interface Playlist {
   id: string;
   name: string;
   tracks: Track[];
+  thumbnail?: string;
 }
 
 export default function MusicWidget() {
+  const { user } = useAuth();
+  const [selectedService, setSelectedService] =
+    useState<StreamingService | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState<
+    Record<StreamingService, boolean>
+  >({
+    spotify: false,
+    youtube: false,
+    youtubeMusic: false,
+  });
+  const [playlists, setPlaylists] = useState<Playlist[]>([]);
   const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [volume, setVolume] = useState(50);
-  const [isMuted, setIsMuted] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState<Track[]>([]);
-  const [playlists, setPlaylists] = useState<Playlist[]>([]);
-  const [selectedPlaylist, setSelectedPlaylist] = useState<string | null>(null);
-  const [isShuffled, setIsShuffled] = useState(false);
-  const [repeatMode, setRepeatMode] = useState<'none' | 'one' | 'all'>('none');
-  const [activeTab, setActiveTab] = useState<'search' | 'playlists' | 'favorites'>('search');
+  const [progress, setProgress] = useState(0);
 
-  const audioRef = useRef<HTMLAudioElement>(null);
-
-  // Dados de exemplo
-  const sampleTracks: Track[] = [
+  const services: Record<
+    StreamingService,
     {
-      id: '1',
-      title: 'Bohemian Rhapsody',
-      artist: 'Queen',
-      duration: '5:55',
-      platform: 'youtube',
-      thumbnail: 'https://via.placeholder.com/60x60?text=Q'
-    },
-    {
-      id: '2',
-      title: 'Imagine',
-      artist: 'John Lennon',
-      duration: '3:07',
-      platform: 'spotify',
-      thumbnail: 'https://via.placeholder.com/60x60?text=JL'
-    },
-    {
-      id: '3',
-      title: 'Hotel California',
-      artist: 'Eagles',
-      duration: '6:30',
-      platform: 'youtube',
-      thumbnail: 'https://via.placeholder.com/60x60?text=E'
-    },
-    {
-      id: '4',
-      title: 'Stairway to Heaven',
-      artist: 'Led Zeppelin',
-      duration: '8:02',
-      platform: 'spotify',
-      thumbnail: 'https://via.placeholder.com/60x60?text=LZ'
+      name: string;
+      authUrl: string;
+      icon: React.ReactNode;
     }
-  ];
+  > = {
+    spotify: {
+      name: 'Spotify',
+      authUrl: `/api/music/auth/spotify/login`,
+      icon: <FaSpotify className='w-6 h-6 text-green-500' />,
+    },
+    youtube: {
+      name: 'YouTube',
+      authUrl: `/api/music/auth/youtube/login`,
+      icon: <FaYoutube className='w-6 h-6 text-red-500' />,
+    },
+    youtubeMusic: {
+      name: 'YouTube Music',
+      authUrl: `/api/music/auth/youtube-music/login`,
+      icon: <FaMusic className='w-6 h-6 text-red-700' />,
+    },
+  };
 
   useEffect(() => {
-    // Carregar playlists do localStorage
-    const savedPlaylists = localStorage.getItem('music-playlists');
-    if (savedPlaylists) {
-      try {
-        setPlaylists(JSON.parse(savedPlaylists));
-      } catch (error) {
-        console.error('Erro ao carregar playlists:', error);
+    checkAuthentication();
+  }, [selectedService]);
+
+  const checkAuthentication = async () => {
+    if (!selectedService) return;
+
+    try {
+      const response = await fetch(`/api/music/auth/${selectedService}/status`);
+      const data = await response.json();
+      setIsAuthenticated((prev) => ({
+        ...prev,
+        [selectedService]: data.isAuthenticated,
+      }));
+
+      if (data.isAuthenticated) {
+        fetchPlaylists();
       }
-    } else {
-      // Criar playlist de exemplo
-      const defaultPlaylist: Playlist = {
-        id: 'default',
-        name: 'Minha Playlist',
-        tracks: sampleTracks
-      };
-      setPlaylists([defaultPlaylist]);
+    } catch (error) {
+      console.error('Erro ao verificar autenticação:', error);
     }
-  }, []);
-
-  useEffect(() => {
-    // Salvar playlists no localStorage
-    localStorage.setItem('music-playlists', JSON.stringify(playlists));
-  }, [playlists]);
-
-  const handleSearch = () => {
-    if (!searchQuery.trim()) return;
-    
-    // Simular busca (em um app real, isso faria chamadas para APIs)
-    const filtered = sampleTracks.filter(track =>
-      track.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      track.artist.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-    setSearchResults(filtered);
   };
 
-  const playTrack = (track: Track) => {
-    setCurrentTrack(track);
-    setIsPlaying(true);
-    // Em um app real, aqui você carregaria o áudio da URL
+  const fetchPlaylists = async () => {
+    if (!selectedService) return;
+
+    try {
+      const response = await fetch(`/api/music/${selectedService}/playlists`);
+      const data = await response.json();
+      setPlaylists(data.playlists);
+    } catch (error) {
+      console.error('Erro ao buscar playlists:', error);
+    }
   };
 
-  const togglePlayPause = () => {
+  const handlePlayPause = () => {
     setIsPlaying(!isPlaying);
   };
 
-  const nextTrack = () => {
-    if (!currentTrack) return;
-    
-    const currentPlaylist = playlists.find(p => p.id === selectedPlaylist);
+  const handlePrevious = () => {
+    if (!currentTrack || !selectedService || playlists.length === 0) return;
+
+    const currentPlaylist = playlists.find((playlist) =>
+      playlist.tracks.some((track) => track.id === currentTrack.id)
+    );
+
     if (!currentPlaylist) return;
-    
-    const currentIndex = currentPlaylist.tracks.findIndex(t => t.id === currentTrack.id);
-    const nextIndex = (currentIndex + 1) % currentPlaylist.tracks.length;
-    playTrack(currentPlaylist.tracks[nextIndex]);
+
+    const currentIndex = currentPlaylist.tracks.findIndex(
+      (track) => track.id === currentTrack.id
+    );
+
+    const previousIndex =
+      currentIndex > 0 ? currentIndex - 1 : currentPlaylist.tracks.length - 1;
+    setCurrentTrack(currentPlaylist.tracks[previousIndex]);
   };
 
-  const previousTrack = () => {
-    if (!currentTrack) return;
-    
-    const currentPlaylist = playlists.find(p => p.id === selectedPlaylist);
+  const handleNext = () => {
+    if (!currentTrack || !selectedService || playlists.length === 0) return;
+
+    const currentPlaylist = playlists.find((playlist) =>
+      playlist.tracks.some((track) => track.id === currentTrack.id)
+    );
+
     if (!currentPlaylist) return;
-    
-    const currentIndex = currentPlaylist.tracks.findIndex(t => t.id === currentTrack.id);
-    const prevIndex = currentIndex === 0 ? currentPlaylist.tracks.length - 1 : currentIndex - 1;
-    playTrack(currentPlaylist.tracks[prevIndex]);
+
+    const currentIndex = currentPlaylist.tracks.findIndex(
+      (track) => track.id === currentTrack.id
+    );
+
+    const nextIndex =
+      currentIndex < currentPlaylist.tracks.length - 1 ? currentIndex + 1 : 0;
+    setCurrentTrack(currentPlaylist.tracks[nextIndex]);
   };
 
-  const toggleMute = () => {
-    setIsMuted(!isMuted);
+  const handleVolumeChange = (newVolume: number) => {
+    setVolume(newVolume);
   };
 
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  const handleProgressChange = (newProgress: number) => {
+    setProgress(newProgress);
   };
 
-  const getPlatformIcon = (platform: string) => {
-    switch (platform) {
+  const renderPlayer = () => {
+    if (!selectedService || !currentTrack) return null;
+
+    switch (selectedService) {
       case 'youtube':
-        return <div className="w-4 h-4 bg-red-600 rounded-sm flex items-center justify-center text-white text-xs">Y</div>;
-      case 'spotify':
-        return <div className="w-4 h-4 bg-green-600 rounded-full flex items-center justify-center text-white text-xs">S</div>;
-      default:
-        return <Music className="w-4 h-4 text-gray-400" />;
-    }
-  };
-
-  const openInPlatform = (track: Track) => {
-    // Em um app real, isso abriria o link da plataforma
-    const urls = {
-      youtube: `https://www.youtube.com/results?search_query=${encodeURIComponent(track.title + ' ' + track.artist)}`,
-      spotify: `https://open.spotify.com/search/${encodeURIComponent(track.title + ' ' + track.artist)}`
-    };
-    
-    if (track.platform in urls) {
-      window.open(urls[track.platform as keyof typeof urls], '_blank');
-    }
-  };
-
-  const renderTrackList = (tracks: Track[]) => (
-    <div className="space-y-2">
-      {tracks.map((track) => (
-        <div
-          key={track.id}
-          className={`p-3 rounded-lg border border-gray-700 hover:bg-gray-800/50 transition-colors cursor-pointer ${
-            currentTrack?.id === track.id ? 'bg-blue-600/20 border-blue-500' : 'bg-gray-800/30'
-          }`}
-          onClick={() => playTrack(track)}
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-12 h-12 bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
-              {track.thumbnail ? (
-                <img src={track.thumbnail} alt={track.title} className="w-full h-full object-cover" />
-              ) : (
-                <Music className="w-6 h-6 text-gray-400" />
-              )}
-            </div>
-            
-            <div className="flex-1 min-w-0">
-              <h4 className="font-medium text-white truncate">{track.title}</h4>
-              <p className="text-sm text-gray-400 truncate">{track.artist}</p>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              {getPlatformIcon(track.platform)}
-              <span className="text-xs text-gray-500">{track.duration}</span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openInPlatform(track);
-                }}
-                className="text-gray-400 hover:text-blue-400 transition-colors"
-              >
-                <ExternalLink className="w-4 h-4" />
-              </button>
-            </div>
+        return (
+          <div className='aspect-video w-full'>
+            <YouTube
+              videoId={currentTrack.id}
+              opts={{
+                height: '100%',
+                width: '100%',
+                playerVars: {
+                  autoplay: isPlaying ? 1 : 0,
+                  controls: 1,
+                },
+              }}
+              onStateChange={(e) => setIsPlaying(e.data === 1)}
+              onReady={(e) => e.target.setVolume(volume)}
+            />
           </div>
-        </div>
-      ))}
-    </div>
-  );
+        );
+      case 'spotify':
+        return (
+          <SpotifyPlayer
+            token={currentTrack.uri!}
+            uris={[currentTrack.uri!]}
+            play={isPlaying}
+            callback={(state) => {
+              setIsPlaying(state.isPlaying);
+              setProgress(state.progressMs);
+            }}
+            styles={{
+              activeColor: '#1ed760',
+              bgColor: '#181818',
+              color: '#fff',
+              loaderColor: '#fff',
+              sliderColor: '#1ed760',
+              trackArtistColor: '#ccc',
+              trackNameColor: '#fff',
+            }}
+          />
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
-    <div className="p-4 h-full flex flex-col">
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-4">
-        <Music className="w-5 h-5 text-purple-400" />
-        <h2 className="text-lg font-semibold text-white">Player de Música</h2>
-      </div>
-
-      {/* Current Track Display */}
-      {currentTrack && (
-        <div className="mb-4 p-4 bg-gray-800 rounded-lg border border-gray-700">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-16 h-16 bg-gray-700 rounded-lg flex items-center justify-center overflow-hidden">
-              {currentTrack.thumbnail ? (
-                <img src={currentTrack.thumbnail} alt={currentTrack.title} className="w-full h-full object-cover" />
-              ) : (
-                <Music className="w-8 h-8 text-gray-400" />
-              )}
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-white truncate">{currentTrack.title}</h3>
-              <p className="text-gray-400 truncate">{currentTrack.artist}</p>
-              <div className="flex items-center gap-2 mt-1">
-                {getPlatformIcon(currentTrack.platform)}
-                <span className="text-xs text-gray-500">{currentTrack.duration}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Progress Bar */}
-          <div className="mb-3">
-            <div className="flex items-center gap-2 text-xs text-gray-400 mb-1">
-              <span>{formatTime(currentTime)}</span>
-              <div className="flex-1 h-1 bg-gray-700 rounded-full">
-                <div 
-                  className="h-full bg-blue-500 rounded-full transition-all"
-                  style={{ width: duration > 0 ? `${(currentTime / duration) * 100}%` : '0%' }}
-                />
-              </div>
-              <span>{currentTrack.duration}</span>
-            </div>
-          </div>
-
-          {/* Controls */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setIsShuffled(!isShuffled)}
-                className={`p-2 rounded-lg transition-colors ${isShuffled ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}
-              >
-                <Shuffle className="w-4 h-4" />
-              </button>
-              <button
-                onClick={previousTrack}
-                className="p-2 text-gray-400 hover:text-white transition-colors"
-              >
-                <SkipBack className="w-5 h-5" />
-              </button>
-              <button
-                onClick={togglePlayPause}
-                className="p-3 bg-blue-600 hover:bg-blue-700 text-white rounded-full transition-colors"
-              >
-                {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
-              </button>
-              <button
-                onClick={nextTrack}
-                className="p-2 text-gray-400 hover:text-white transition-colors"
-              >
-                <SkipForward className="w-5 h-5" />
-              </button>
-              <button
-                onClick={() => setRepeatMode(repeatMode === 'none' ? 'all' : repeatMode === 'all' ? 'one' : 'none')}
-                className={`p-2 rounded-lg transition-colors ${repeatMode !== 'none' ? 'bg-blue-600 text-white' : 'text-gray-400 hover:text-white'}`}
-              >
-                <Repeat className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button onClick={toggleMute} className="text-gray-400 hover:text-white transition-colors">
-                {isMuted ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
-              </button>
-              <input
-                type="range"
-                min="0"
-                max="100"
-                value={isMuted ? 0 : volume}
-                onChange={(e) => setVolume(parseInt(e.target.value))}
-                className="w-20 h-1 bg-gray-700 rounded-lg appearance-none slider"
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Tabs */}
-      <div className="flex mb-4 border-b border-gray-700">
-        {[
-          { id: 'search', label: 'Buscar', icon: Search },
-          { id: 'playlists', label: 'Playlists', icon: Music },
-          { id: 'favorites', label: 'Favoritos', icon: Heart }
-        ].map(({ id, label, icon: Icon }) => (
+    <div className='flex flex-col h-full bg-gray-800 text-white p-4 rounded-lg'>
+      <div className='flex space-x-4 mb-4'>
+        {Object.entries(services).map(([key, service]) => (
           <button
-            key={id}
-            onClick={() => setActiveTab(id as any)}
-            className={`flex items-center gap-2 px-4 py-2 border-b-2 transition-colors ${
-              activeTab === id
-                ? 'border-blue-500 text-blue-400'
-                : 'border-transparent text-gray-400 hover:text-white'
+            key={key}
+            onClick={() => {
+              if (!isAuthenticated[key as StreamingService]) {
+                window.location.href = service.authUrl;
+              } else {
+                setSelectedService(key as StreamingService);
+              }
+            }}
+            className={`flex items-center space-x-2 px-4 py-2 rounded ${
+              selectedService === key
+                ? 'bg-blue-600'
+                : 'bg-gray-700 hover:bg-gray-600'
             }`}
           >
-            <Icon className="w-4 h-4" />
-            {label}
+            {service.icon}
+            <span>{service.name}</span>
           </button>
         ))}
       </div>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto">
-        {activeTab === 'search' && (
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Buscar músicas..."
-                className="flex-1 px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-blue-500"
-                onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
-              />
-              <button
-                onClick={handleSearch}
-                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors"
-              >
-                <Search className="w-4 h-4" />
-              </button>
-            </div>
-
-            {searchResults.length > 0 ? (
-              renderTrackList(searchResults)
-            ) : searchQuery ? (
-              <div className="text-center py-8 text-gray-400">
-                <Search className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>Nenhum resultado encontrado</p>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-400">
-                <Music className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>Digite algo para buscar músicas</p>
-                <p className="text-sm mt-1">YouTube, Spotify e mais</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {activeTab === 'playlists' && (
-          <div className="space-y-4">
-            {playlists.length > 0 ? (
-              playlists.map((playlist) => (
-                <div key={playlist.id} className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <h3 className="font-semibold text-white">{playlist.name}</h3>
-                    <span className="text-sm text-gray-400">{playlist.tracks.length} músicas</span>
+      {selectedService && isAuthenticated[selectedService] ? (
+        <div className='flex flex-1 gap-4'>
+          <div className='w-1/3 overflow-y-auto'>
+            <h3 className='text-lg font-semibold mb-4'>Suas Playlists</h3>
+            <div className='space-y-2'>
+              {playlists.map((playlist) => (
+                <button
+                  key={playlist.id}
+                  onClick={() => setCurrentTrack(playlist.tracks[0])}
+                  className='w-full flex items-center space-x-3 p-3 hover:bg-gray-700 rounded group transition-colors'
+                >
+                  {playlist.thumbnail && (
+                    <img
+                      src={playlist.thumbnail}
+                      alt={playlist.name}
+                      className='w-12 h-12 object-cover rounded'
+                    />
+                  )}
+                  <div className='flex-1 text-left'>
+                    <p className='font-medium truncate'>{playlist.name}</p>
+                    <p className='text-sm text-gray-400'>
+                      {playlist.tracks.length} faixas
+                    </p>
                   </div>
-                  {renderTrackList(playlist.tracks)}
-                </div>
-              ))
-            ) : (
-              <div className="text-center py-8 text-gray-400">
-                <Music className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                <p>Nenhuma playlist ainda</p>
-              </div>
-            )}
+                </button>
+              ))}
+            </div>
           </div>
-        )}
 
-        {activeTab === 'favorites' && (
-          <div className="text-center py-8 text-gray-400">
-            <Heart className="w-12 h-12 mx-auto mb-2 opacity-50" />
-            <p>Nenhuma música favorita ainda</p>
-            <p className="text-sm mt-1">Curta suas músicas favoritas</p>
+          <div className='flex-1 flex flex-col'>
+            {renderPlayer()}
+
+            <div className='mt-4 p-4 bg-gray-900 rounded-lg'>
+              {currentTrack && (
+                <div className='mb-4'>
+                  <h4 className='font-medium'>{currentTrack.title}</h4>
+                  <p className='text-gray-400'>{currentTrack.artist}</p>
+                </div>
+              )}
+
+              <div className='flex items-center justify-center space-x-6'>
+                <button
+                  onClick={handlePrevious}
+                  className='p-2 rounded-full hover:bg-gray-700 transition-colors'
+                  title='Anterior'
+                >
+                  ⏮️
+                </button>
+                <button
+                  onClick={handlePlayPause}
+                  className='p-4 rounded-full bg-blue-600 hover:bg-blue-700 transition-colors'
+                  title={isPlaying ? 'Pausar' : 'Reproduzir'}
+                >
+                  {isPlaying ? '⏸️' : '▶️'}
+                </button>
+                <button
+                  onClick={handleNext}
+                  className='p-2 rounded-full hover:bg-gray-700 transition-colors'
+                  title='Próxima'
+                >
+                  ⏭️
+                </button>
+              </div>
+
+              <div className='mt-4 flex items-center space-x-4'>
+                <input
+                  type='range'
+                  min='0'
+                  max='100'
+                  value={volume}
+                  onChange={(e) => handleVolumeChange(Number(e.target.value))}
+                  className='w-24'
+                  title='Volume'
+                />
+                {selectedService !== 'youtube' && (
+                  <input
+                    type='range'
+                    min='0'
+                    max='100'
+                    value={progress}
+                    onChange={(e) =>
+                      handleProgressChange(Number(e.target.value))
+                    }
+                    className='flex-1'
+                    title='Progresso'
+                  />
+                )}
+              </div>
+            </div>
           </div>
-        )}
-      </div>
+        </div>
+      ) : (
+        <div className='flex-1 flex items-center justify-center'>
+          <p className='text-gray-400'>
+            {selectedService
+              ? 'Faça login para acessar suas playlists'
+              : 'Selecione um serviço de streaming'}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
-

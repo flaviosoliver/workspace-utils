@@ -1,33 +1,28 @@
 import crypto from 'crypto';
 
-const algorithm = 'aes-256-cbc';
-const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY;
+const ENCRYPTION_KEY = process.env.ENCRYPTION_KEY!.padEnd(32, '0');
 const IV_LENGTH = 16;
 
-if (!ENCRYPTION_KEY || ENCRYPTION_KEY.length !== 44) {
-  throw new Error(
-    'ENCRYPTION_KEY invalid. Must be 44 characters long (32 bytes in Base64)'
-  );
-}
-
-const key = crypto.createHash('sha256').update(ENCRYPTION_KEY).digest();
-
-export function encrypt(text: string): string {
-  if (!text) return '';
+export function encrypt(text: string) {
   const iv = crypto.randomBytes(IV_LENGTH);
-  const cipher = crypto.createCipheriv(algorithm, key, iv);
-  let encrypted = cipher.update(text);
+  const cipher = crypto.createCipheriv(
+    'aes-256-cbc',
+    Buffer.from(ENCRYPTION_KEY),
+    iv
+  );
+  let encrypted = cipher.update(text, 'utf8');
   encrypted = Buffer.concat([encrypted, cipher.final()]);
   return iv.toString('hex') + ':' + encrypted.toString('hex');
 }
 
-export function decrypt(text: string): string {
-  if (!text) return '';
-  const textParts = text.split(':');
-  const iv = Buffer.from(textParts.shift()!, 'hex');
-  const encryptedText = Buffer.from(textParts.join(':'), 'hex');
-  const decipher = crypto.createDecipheriv(algorithm, key, iv);
-  let decrypted = decipher.update(encryptedText);
+export function decrypt(text: string) {
+  const [iv, encryptedText] = text.split(':');
+  const decipher = crypto.createDecipheriv(
+    'aes-256-cbc',
+    Buffer.from(ENCRYPTION_KEY),
+    Buffer.from(iv, 'hex')
+  );
+  let decrypted = decipher.update(Buffer.from(encryptedText, 'hex'));
   decrypted = Buffer.concat([decrypted, decipher.final()]);
   return decrypted.toString();
 }

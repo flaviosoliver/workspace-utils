@@ -7,20 +7,20 @@ export default function NotFoundPage() {
   const router = useRouter();
   const [hasToken, setHasToken] = useState<boolean | null>(null);
 
-  useEffect(() => {
-    const tokenExists = document.cookie
-      .split('; ')
-      .some((row) => row.startsWith('auth_token='));
-    if (!tokenExists) {
-      router.replace('/');
-    } else {
-      setHasToken(true);
-    }
-  }, [router]);
+  // useEffect(() => {
+  //   const tokenExists = document.cookie
+  //     .split('; ')
+  //     .some((row) => row.startsWith('auth_token='));
+  //   if (!tokenExists) {
+  //     router.replace('/');
+  //   } else {
+  //     setHasToken(true);
+  //   }
+  // }, [router]);
 
-  if (hasToken === null) {
-    return null;
-  }
+  // if (hasToken === null) {
+  //   return null;
+  // }
 
   return (
     <div className='flex items-center justify-center min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4'>

@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import mongoose, { Schema, Document } from 'mongoose';
 
-export interface IUser extends Document {
+interface IUser extends Document {
   email: string;
   name: string;
   password: string;
@@ -32,8 +32,18 @@ export interface IUser extends Document {
       clientSecret?: string;
       accessToken?: string;
       refreshToken?: string;
-    };
-    youtube?: string;
+      expiresAt?: Date;
+    },
+    youtube?: {
+      accessToken?: string;
+      refreshToken?: string;
+      expiresAt?: Date;
+    },
+    youtubeMusic?: {
+      accessToken?: string;
+      refreshToken?: string;
+      expiresAt?: Date;
+    }
   };
   createdAt: Date;
   updatedAt: Date;
@@ -157,6 +167,10 @@ const UserSchema = new Schema<IUser>(
         },
       },
       youtube: {
+        type: String,
+        default: '',
+      },
+      ytmusic: {
         type: String,
         default: '',
       },

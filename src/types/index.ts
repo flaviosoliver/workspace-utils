@@ -37,8 +37,18 @@ export interface ApiTokens {
     clientSecret?: string;
     accessToken?: string;
     refreshToken?: string;
+    expiresAt?: Date;
   };
-  youtube?: string;
+  youtube?: {
+    accessToken?: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+  };
+  youtubeMusic?: {
+    accessToken?: string;
+    refreshToken?: string;
+    expiresAt?: Date;
+  };
 }
 
 export type ThemeName =
