@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     const date = searchParams.get('date'); // formato YYYY-MM-DD
     const search = searchParams.get('search') || '';
 
-    let filter: any = { userId: decoded.userId };
+    const filter: any = { userId: decoded.userId };
 
     const now = new Date();
     if (view === 'day' && date) {

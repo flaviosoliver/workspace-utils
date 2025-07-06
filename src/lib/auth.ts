@@ -45,7 +45,7 @@ export function verifyToken(token: string): { userId: string } | null {
 export async function verifyTokenToRegister(token: string) {
   await connectDB();
 
-  let user = await User.findOne<typeof User>({ verificationToken: token });
+  const user = await User.findOne<typeof User>({ verificationToken: token });
 
   if (!user) {
     throw new Error('Invalid token');
