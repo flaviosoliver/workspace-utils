@@ -225,6 +225,7 @@ export default function WaterReminderWidget() {
             <span className='text-sm'>Ativar Lembretes</span>
             <label className='relative inline-flex items-center cursor-pointer'>
               <input
+                aria-label='Ativar lembretes'
                 type='checkbox'
                 checked={reminderEnabled}
                 onChange={(e) => {
@@ -242,6 +243,7 @@ export default function WaterReminderWidget() {
           <div className='inline-block'>
             <label className='block text-sm mb-1'>Meta Diária (ml)</label>
             <input
+              aria-label='Meta diária de água'
               type='number'
               value={dailyGoal}
               onChange={(e) => setDailyGoal(parseInt(e.target.value) || 2000)}
@@ -254,6 +256,7 @@ export default function WaterReminderWidget() {
           <div className='inline-block'>
             <label className='block text-sm mb-1'>Intervalo (minutos)</label>
             <input
+              aria-label='Intervalo de lembretes'
               type='number'
               value={reminderInterval}
               onChange={(e) =>
@@ -274,6 +277,7 @@ export default function WaterReminderWidget() {
             <div className='flex gap-2'>
               {[10, 20, 40].map((minutes) => (
                 <button
+                  type='button'
                   key={minutes}
                   onClick={() => snoozeReminder(minutes)}
                   className='bg-gray-700 hover:bg-gray-600 px-3 py-1 rounded text-sm'

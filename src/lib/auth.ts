@@ -2,6 +2,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import connectDB from './mongodb';
 import User from './models/User';
+import { IUser } from '@/types';
 
 const JWT_SECRET =
   process.env.NEXTAUTH_SECRET || '%aWSSNmRXa28tvmY75tht9E&*GUxz2mC';
@@ -45,7 +46,7 @@ export function verifyToken(token: string): { userId: string } | null {
 export async function verifyTokenToRegister(token: string) {
   await connectDB();
 
-  const user = await User.findOne<typeof User>({ verificationToken: token });
+  const user = await User.findOne({ verificationToken: token }).exec();
 
   if (!user) {
     throw new Error('Invalid token');

@@ -1,4 +1,4 @@
-export interface User {
+export interface IUser {
   _id: string;
   email: string;
   name: string;
@@ -110,7 +110,7 @@ export interface Size {
   height: number;
 }
 
-export interface Task {
+export interface ITask {
   _id: string;
   userId: string;
   title: string;
@@ -124,7 +124,7 @@ export interface Task {
   updatedAt: Date;
 }
 
-export interface Note {
+export interface INote {
   _id: string;
   userId: string;
   title: string;
@@ -134,22 +134,22 @@ export interface Note {
   updatedAt: Date;
 }
 
-export interface TodoItem {
+export interface ITodoItem {
   text: string;
   completed: boolean;
   createdAt: Date;
 }
 
-export interface TodoList {
+export interface ITodoList {
   _id: string;
   userId: string;
   name: string;
-  items: TodoItem[];
+  items: ITodoItem[];
   createdAt: Date;
   updatedAt: Date;
 }
 
-export interface WaterIntake {
+export interface IWaterIntake {
   _id: string;
   userId: string;
   amount: number;

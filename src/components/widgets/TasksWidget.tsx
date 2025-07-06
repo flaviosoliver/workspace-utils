@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Check, Trash2, Calendar, Circle } from 'lucide-react';
-import { Task } from '@/types';
+import { ITask } from '@/types';
 
 export default function TasksWidget() {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const [tasks, setTasks] = useState<ITask[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState<

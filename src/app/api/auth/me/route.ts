@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
         email: user.email,
         name: user.name,
         preferences: user.preferences,
-        apiKeys: user.apiKeys,
+        apiTokens: user.apiTokens,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       },

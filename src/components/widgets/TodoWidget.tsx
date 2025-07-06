@@ -1,12 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus, Check, X, Edit2, Save, Trash2 } from 'lucide-react';
-import { TodoList, TodoItem } from '@/types';
+import { Plus, Check, Trash2 } from 'lucide-react';
+import { ITodoList, ITodoItem } from '@/types';
 
 export default function TodoWidget() {
-  const [lists, setLists] = useState<TodoList[]>([]);
-  const [selectedList, setSelectedList] = useState<TodoList | null>(null);
+  const [lists, setLists] = useState<ITodoList[]>([]);
+  const [selectedList, setSelectedList] = useState<ITodoList | null>(null);
   const [newListName, setNewListName] = useState('');
   const [newItemText, setNewItemText] = useState('');
 
@@ -66,7 +66,7 @@ export default function TodoWidget() {
   const addItem = async () => {
     if (!selectedList || !newItemText.trim()) return;
 
-    const newItem: TodoItem = {
+    const newItem: ITodoItem = {
       text: newItemText.trim(),
       completed: false,
       createdAt: new Date(),

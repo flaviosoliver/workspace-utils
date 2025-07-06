@@ -1,6 +1,5 @@
 import { signJwt, verifyTokenToRegister } from '@/lib/auth';
 import connectDB from '@/lib/mongodb';
-import { User } from '@/types';
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 
@@ -29,7 +28,7 @@ export async function POST(request: Request) {
     result.user.isVerified = true;
     await result.user.save();
 
-    const user: User = result.user;
+    const user = result.user;
 
     const jwt = signJwt({ id: user._id, email: user.email });
     (await cookies()).set('next-auth.session-token', jwt, {

@@ -4,7 +4,6 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
 export default function VerifyEmailPage() {
-  const searchParams = new URLSearchParams(window.location.search);
   const router = useRouter();
   const [error, setError] = useState('');
   const [status, setStatus] = useState<'verifying' | 'success' | 'error'>(
@@ -15,9 +14,11 @@ export default function VerifyEmailPage() {
   >('idle');
   const [resendMessage, setResendMessage] = useState('');
   const [email, setEmail] = useState('');
-  const token = searchParams.get('token');
 
   useEffect(() => {
+    const searchParams = new URLSearchParams(window.location.search);
+    const token = searchParams.get('token');
+
     const verify = async () => {
       if (!token) {
         setStatus('error');
@@ -42,7 +43,7 @@ export default function VerifyEmailPage() {
       }
     };
     verify();
-  }, [token]);
+  }, []);
 
   const handleResend = async () => {
     setResendStatus('sending');

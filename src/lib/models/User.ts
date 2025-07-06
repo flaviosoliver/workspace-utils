@@ -1,7 +1,8 @@
+import { IUser, ThemeName } from '@/types';
 import bcrypt from 'bcryptjs';
-import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document, Model } from 'mongoose';
 
-interface IUser extends Document {
+interface UserDocument extends Omit<IUser, '_id'>, Document {
   email: string;
   name: string;
   password: string;
@@ -11,7 +12,7 @@ interface IUser extends Document {
   resetPasswordToken?: string;
   resetPasswordTokenExpires?: Date;
   preferences: {
-    theme: string;
+    theme: ThemeName;
     language: string;
     timezone: string;
     notifications: boolean;
@@ -49,7 +50,16 @@ interface IUser extends Document {
   updatedAt: Date;
 }
 
-const UserSchema = new Schema<IUser>(
+interface UserMethods {
+  comparePassword(candidatePassword: string): Promise<boolean>;
+  updatePassword(newPassword: string): Promise<UserDocument>;
+  toJSON(): Record<string, any>;
+  save(): Promise<UserDocument>;
+}
+
+type UserModel = Model<UserDocument, Record<string, never>, UserMethods>;
+
+const UserSchema = new Schema<UserDocument, UserModel, UserMethods>(
   {
     email: {
       type: String,
@@ -181,16 +191,38 @@ const UserSchema = new Schema<IUser>(
   }
 );
 
-UserSchema.methods.comparePassword = async function (
-  candidatePassword: string
-): Promise<boolean> {
-  return bcrypt.compare(candidatePassword, this.password);
-};
+UserSchema.method(
+  'comparePassword',
+  async function (candidatePassword: string) {
+    return bcrypt.compare(candidatePassword, this.password);
+  }
+);
 
-UserSchema.methods.updatePassword = async function (newPassword: string) {
+UserSchema.method('updatePassword', async function (newPassword: string) {
   this.password = newPassword;
   return this.save();
-};
+});
 
-export default mongoose.models.User ||
-  mongoose.model<IUser>('User', UserSchema);
+UserSchema.method('toJSON', function () {
+  const userObject = this.toObject();
+  delete userObject.password;
+  return userObject;
+});
+
+// UserSchema.method('save', async function (user: UserDocument) {
+
+// }
+
+UserSchema.virtual('id').get(function (this: UserDocument) {
+  return (this._id as mongoose.Types.ObjectId).toHexString();
+});
+
+UserSchema.set('toJSON', {
+  virtuals: true,
+});
+
+const User: UserModel =
+  mongoose.models.User ||
+  mongoose.model<UserDocument, UserModel>('User', UserSchema);
+
+export default User;

@@ -73,6 +73,7 @@ export default function SettingsWidget() {
                   OpenAI API Key
                 </label>
                 <input
+                  aria-label='OpenAI API Key'
                   type='password'
                   placeholder='sk-...'
                   className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400'
@@ -83,6 +84,7 @@ export default function SettingsWidget() {
                   Anthropic API Key
                 </label>
                 <input
+                  aria-label='Anthropic API Key'
                   type='password'
                   placeholder='sk-ant-...'
                   className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400'
@@ -93,13 +95,18 @@ export default function SettingsWidget() {
                   Google API Key
                 </label>
                 <input
+                  aria-label='Google API Key'
                   type='password'
                   placeholder='AIza...'
                   className='w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400'
                 />
               </div>
             </div>
-            <button className='w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-200'>
+            <button
+              aria-label='Salvar API Keys'
+              type='button'
+              className='w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-md transition duration-200'
+            >
               Salvar Chaves de API
             </button>
           </div>
@@ -122,6 +129,7 @@ export default function SettingsWidget() {
                   </p>
                 </div>
                 <input
+                  aria-label='Notificações do sistema'
                   type='checkbox'
                   defaultChecked={user?.preferences?.notifications}
                   className='w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500'
@@ -137,6 +145,7 @@ export default function SettingsWidget() {
                   </p>
                 </div>
                 <input
+                  aria-label='Sons de notificação'
                   type='checkbox'
                   defaultChecked
                   className='w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500'
@@ -164,6 +173,8 @@ export default function SettingsWidget() {
             const Icon = tab.icon;
             return (
               <button
+                aria-label='Configuração'
+                type='button'
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`

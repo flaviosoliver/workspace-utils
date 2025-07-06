@@ -11,18 +11,11 @@ import {
   FileText,
   StickyNote,
 } from 'lucide-react';
-
-interface Note {
-  _id: string;
-  title: string;
-  content: string;
-  createdAt: string;
-  updatedAt: string;
-}
+import { INote } from '@/types';
 
 export default function NotesWidget() {
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [selectedNote, setSelectedNote] = useState<Note | null>(null);
+  const [notes, setNotes] = useState<INote[]>([]);
+  const [selectedNote, setSelectedNote] = useState<INote | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState('');
   const [editContent, setEditContent] = useState('');
@@ -210,7 +203,7 @@ export default function NotesWidget() {
                       {note.content || 'Sem conteúdo'}
                     </p>
                     <p className='text-xs text-gray-500 mt-2'>
-                      {formatDate(note.updatedAt)}
+                      {formatDate(note.updatedAt.toISOString())}
                     </p>
                   </div>
                   <button
@@ -288,7 +281,8 @@ export default function NotesWidget() {
                   {isEditing ? 'Editando' : selectedNote.title}
                 </h3>
                 <p className='text-sm text-gray-400'>
-                  Atualizada em {formatDate(selectedNote.updatedAt)}
+                  Atualizada em{' '}
+                  {formatDate(selectedNote.updatedAt.toISOString())}
                 </p>
               </div>
 

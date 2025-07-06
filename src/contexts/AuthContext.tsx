@@ -7,10 +7,10 @@ import React, {
   useState,
   ReactNode,
 } from 'react';
-import { User } from '@/types';
+import { IUser } from '@/types';
 
 interface AuthContextType {
-  user: User | null;
+  user: IUser | null;
   login: (email: string, password: string) => Promise<void>;
   register: (
     email: string,
@@ -38,7 +38,7 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<IUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

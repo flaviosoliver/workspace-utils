@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import YouTube from 'react-youtube';
 import SpotifyPlayer from 'react-spotify-web-playback';

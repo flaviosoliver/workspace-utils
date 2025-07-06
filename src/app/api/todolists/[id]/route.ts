@@ -4,7 +4,10 @@ import { verifyJwt } from '@/lib/auth';
 import TodoList from '@/lib/models/TodoList';
 import connectDB from '@/lib/mongodb';
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string[] }> }
+) {
   try {
     await connectDB();
 
@@ -21,7 +24,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const id = (await params).id[0];
     const { name, items } = await request.json();
 
     const list = await TodoList.findOneAndUpdate(
@@ -47,7 +50,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string[] }> }
+) {
   try {
     await connectDB();
 
@@ -64,11 +70,11 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
     }
 
-    const { id } = await params;
+    const id = (await params).id[0];
 
     const list = await TodoList.findOneAndDelete({
       _id: id,
-      userId: decoded.userId
+      userId: decoded.userId,
     });
 
     if (!list) {

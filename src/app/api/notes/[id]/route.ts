@@ -6,7 +6,7 @@ import connectDB from '@/lib/mongodb';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string[] }> }
 ) {
   try {
     await connectDB();
@@ -29,7 +29,7 @@ export async function PUT(
       );
     }
 
-    const { id } = params;
+    const id = (await params).id[0];
 
     const note = await Note.findOneAndUpdate(
       { _id: id, userId: decoded.userId },
@@ -56,7 +56,7 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string[] }> }
 ) {
   try {
     await connectDB();
@@ -71,7 +71,7 @@ export async function DELETE(
     if (!decoded || typeof decoded !== 'object' || !('userId' in decoded))
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
 
-    const { id } = params;
+    const id = (await params).id[0];
 
     const note = await Note.findOneAndDelete({
       _id: id,

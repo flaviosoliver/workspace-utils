@@ -16,7 +16,9 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    const user = await User.findOne({
+      email: email.toLowerCase().trim(),
+    }).exec();
 
     if (!user) {
       return NextResponse.json({

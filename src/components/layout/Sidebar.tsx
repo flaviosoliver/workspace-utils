@@ -30,6 +30,7 @@ const widgetIcons: Record<
   dataGenerator: Database,
   music: Music,
   aiChat: MessageSquare,
+  settings: undefined,
 };
 
 const widgetLabels: Record<WidgetType, string> = {
@@ -42,6 +43,7 @@ const widgetLabels: Record<WidgetType, string> = {
   dataGenerator: 'Gerar Dados',
   music: 'Música',
   aiChat: 'Chat IA',
+  settings: '',
 };
 
 export default function Sidebar() {
