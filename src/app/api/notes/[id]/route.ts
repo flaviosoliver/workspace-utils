@@ -29,8 +29,10 @@ export async function PUT(
       );
     }
 
+    const { id } = params;
+
     const note = await Note.findOneAndUpdate(
-      { _id: params.id, userId: decoded.userId },
+      { _id: id, userId: decoded.userId },
       { $set: { title, content } },
       { new: true }
     );
@@ -69,8 +71,10 @@ export async function DELETE(
     if (!decoded || typeof decoded !== 'object' || !('userId' in decoded))
       return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
 
+    const { id } = params;
+
     const note = await Note.findOneAndDelete({
-      _id: params.id,
+      _id: id,
       userId: decoded.userId,
     });
 
