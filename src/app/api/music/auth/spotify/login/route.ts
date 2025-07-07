@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 export async function GET() {
   const clientId = process.env.SPOTIFY_CLIENT_ID;
-  const redirectUri = `${process.env.NEXT_PUBLIC_APP_URL}/api/music/auth/spotify`;
+  const redirectUri = process.env.SPOTIFY_REDIRECT_URI;
 
   const scopes = [
     'user-read-private',
@@ -21,7 +21,7 @@ export async function GET() {
   spotifyAuthUrl.searchParams.append('response_type', 'code');
   spotifyAuthUrl.searchParams.append('client_id', clientId!);
   spotifyAuthUrl.searchParams.append('scope', scopes);
-  spotifyAuthUrl.searchParams.append('redirect_uri', redirectUri);
+  spotifyAuthUrl.searchParams.append('redirect_uri', redirectUri!);
   spotifyAuthUrl.searchParams.append('state', state);
 
   return NextResponse.redirect(spotifyAuthUrl.toString());
