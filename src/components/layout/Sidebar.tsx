@@ -81,37 +81,39 @@ export default function Sidebar() {
       </div>
 
       <div className='flex flex-col space-y-2 flex-1'>
-        {(Object.keys(widgetIcons) as WidgetType[]).map((type) => {
-          const Icon = widgetIcons[type];
-          const isActive = isWidgetActive(type);
+        {(Object.keys(widgetIcons) as WidgetType[])
+          .filter((type) => widgetIcons[type])
+          .map((type) => {
+            const Icon = widgetIcons[type]!;
+            const isActive = isWidgetActive(type);
 
-          return (
-            <button
-              key={type}
-              onClick={() => handleWidgetClick(type)}
-              className={`
-                w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-200
-                ${
-                  isActive
-                    ? 'bg-blue-600 text-white shadow-lg'
-                    : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'
-                }
-                group relative
-              `}
-              title={widgetLabels[type]}
-            >
-              <Icon className='w-6 h-6' />
+            return (
+              <button
+                key={type}
+                onClick={() => handleWidgetClick(type)}
+                className={`
+        w-12 h-12 rounded-lg flex items-center justify-center transition-all duration-200
+        ${
+          isActive
+            ? 'bg-blue-600 text-white shadow-lg'
+            : 'bg-gray-800 text-gray-400 hover:bg-gray-700 hover:text-white'
+        }
+        group relative
+      `}
+                title={widgetLabels[type]}
+              >
+                <Icon className='w-6 h-6' />
 
-              <div className='absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50'>
-                {widgetLabels[type]}
-              </div>
+                <div className='absolute left-full ml-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50'>
+                  {widgetLabels[type]}
+                </div>
 
-              {isActive && (
-                <div className='absolute -left-1 top-1/2 transform -translate-y-1/2 w-1 h-6 bg-blue-400 rounded-r'></div>
-              )}
-            </button>
-          );
-        })}
+                {isActive && (
+                  <div className='absolute -left-1 top-1/2 transform -translate-y-1/2 w-1 h-6 bg-blue-400 rounded-r'></div>
+                )}
+              </button>
+            );
+          })}
       </div>
 
       <div className='flex flex-col space-y-2'>

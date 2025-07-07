@@ -9,9 +9,9 @@ const themeLabels: Record<ThemeName, string> = {
   dracula: 'Dracula',
   monokai: 'Monokai',
   light: 'Light',
-  cyberpunk: '',
-  solarized: '',
-  synthwave: '',
+  cyberpunk: 'Cyberpunk',
+  solarized: 'Solarized',
+  synthwave: 'Synthwave',
 };
 
 const themeDescriptions: Record<ThemeName, string> = {
@@ -19,9 +19,9 @@ const themeDescriptions: Record<ThemeName, string> = {
   dracula: 'Tema escuro com cores vibrantes',
   monokai: 'Tema escuro clássico do Sublime Text',
   light: 'Tema claro e minimalista',
-  cyberpunk: '',
-  solarized: '',
-  synthwave: '',
+  cyberpunk: 'Tema futurista com cores neon',
+  solarized: 'Tema com esquema de cores Solarized',
+  synthwave: 'Tema inspirado na estética dos anos 80',
 };
 
 export default function ThemeSelector() {
