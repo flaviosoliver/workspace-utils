@@ -58,7 +58,12 @@ export type ThemeName =
   | 'light'
   | 'cyberpunk'
   | 'solarized'
-  | 'synthwave';
+  | 'synthwave'
+  | 'red'
+  | 'green'
+  | 'blue'
+  | 'yellow'
+  | 'purple';
 
 export interface Theme {
   name: ThemeName;

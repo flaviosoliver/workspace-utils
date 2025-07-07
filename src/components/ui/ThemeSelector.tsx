@@ -12,6 +12,11 @@ const themeLabels: Record<ThemeName, string> = {
   cyberpunk: 'Cyberpunk',
   solarized: 'Solarized',
   synthwave: 'Synthwave',
+  red: 'Red',
+  green: 'Green',
+  blue: 'Blue',
+  yellow: 'Yellow',
+  purple: 'Purple',
 };
 
 const themeDescriptions: Record<ThemeName, string> = {
@@ -22,6 +27,11 @@ const themeDescriptions: Record<ThemeName, string> = {
   cyberpunk: 'Tema futurista com cores neon',
   solarized: 'Tema com esquema de cores Solarized',
   synthwave: 'Tema inspirado na estética dos anos 80',
+  red: 'Tema vermelho vibrante',
+  green: 'Tema verde natural',
+  blue: 'Tema azul calmo',
+  yellow: 'Tema amarelo brilhante',
+  purple: 'Tema roxo misterioso',
 };
 
 export default function ThemeSelector() {
