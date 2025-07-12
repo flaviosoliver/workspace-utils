@@ -9,13 +9,9 @@ export interface RadioDocument extends Omit<IRadio, '_id'>, Document {
   tags: string[];
 }
 
-interface RadioMethods {
-  // Métodos adicionais podem ser adicionados aqui se necessário
-}
+type RadioModel = Model<RadioDocument, Record<string, never>>;
 
-type RadioModel = Model<RadioDocument, Record<string, never>, RadioMethods>;
-
-const RadioSchema = new Schema<RadioDocument, RadioModel, RadioMethods>(
+const RadioSchema = new Schema<RadioDocument, RadioModel>(
   {
     uri: {
       type: String,
