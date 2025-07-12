@@ -2,10 +2,8 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import connectDB from './mongodb';
 import User from './models/User';
-import { IUser } from '@/types';
 
-const JWT_SECRET =
-  process.env.NEXTAUTH_SECRET || '%aWSSNmRXa28tvmY75tht9E&*GUxz2mC';
+const JWT_SECRET = process.env.NEXTAUTH_SECRET;
 
 export async function hashPassword(password: string): Promise<string> {
   const saltRounds = 12;

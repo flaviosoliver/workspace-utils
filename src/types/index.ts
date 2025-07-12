@@ -195,7 +195,7 @@ export type AIProvider =
   | 'manus'
   | 'perplexity';
 
-export interface Track {
+export interface ITrack {
   id: string;
   title: string;
   artist: string;
@@ -206,11 +206,12 @@ export interface Track {
   source: 'youtube' | 'spotify' | 'youtubeMusic';
 }
 
-export interface Playlist {
+export interface IPlaylist {
   id: string;
   name: string;
-  tracks: Track[];
+  tracks: ITrack[];
   source: 'youtube' | 'spotify' | 'youtubeMusic';
+  thumbnail?: string;
 }
 
 export interface FakeDataConfig {
@@ -218,4 +219,13 @@ export interface FakeDataConfig {
   count: number;
   fields: string[];
   format: 'json' | 'csv' | 'xml';
+}
+
+export interface IRadio {
+  _id: string;
+  uri: string;
+  live: boolean;
+  time?: string;
+  name: string;
+  tags: string[];
 }
