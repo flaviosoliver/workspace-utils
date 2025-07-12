@@ -360,7 +360,7 @@ export default function MusicWidget() {
                             : ''
                         }`}
                       >
-                        <div>
+                        <div className='space-y-2'>
                           <div className='flex items-center'>
                             <BsMusicPlayerFill className='mr-2 text-blue-400' />
                             <span className='font-medium'>{radio.name}</span>
@@ -371,11 +371,13 @@ export default function MusicWidget() {
                                 AO VIVO
                               </span>
                             )}
+                          </div>
+                          <div className='flex items-center'>
                             <span className='text-xs text-gray-400'>
                               {radio.time}
                             </span>
                           </div>
-                          <div>
+                          <div className='flex items-center'>
                             <span className='text-xs text-gray-400'>
                               {radio.tags.map((tag) => `#${tag} `)}
                             </span>
@@ -448,26 +450,30 @@ export default function MusicWidget() {
                     onClick={() => handleRadioSelect(radio)}
                     className='w-full flex items-center justify-between p-2 hover:bg-gray-700 rounded transition-colors'
                   >
-                    <div className='flex items-center'>
-                      <BsMusicPlayerFill className='mr-2 text-blue-400' />
-                      <span className='font-medium'>{radio.name}</span>
-                    </div>
-                    <div className='flex items-center'>
-                      {radio.live && (
-                        <span className='text-xs bg-red-600 text-white px-2 py-0.5 rounded mr-2'>
-                          AO VIVO
+                    <div className='space-y-2'>
+                      <div className='flex items-center'>
+                        <BsMusicPlayerFill className='mr-2 text-blue-400' />
+                        <span className='font-medium text-left'>
+                          {radio.name}
                         </span>
-                      )}
-                    </div>
-                    <div className='flex items-center'>
-                      <span className='text-xs text-gray-400'>
-                        {radio.time}
-                      </span>
-                    </div>
-                    <div className='flex items-center'>
-                      <span className='text-xs text-gray-400'>
-                        {radio.tags}
-                      </span>
+                      </div>
+                      <div className='flex items-center'>
+                        {radio.live && (
+                          <span className='text-xs bg-red-600 text-white px-2 py-0.5 rounded mr-2'>
+                            AO VIVO
+                          </span>
+                        )}
+                      </div>
+                      <div className='flex items-center'>
+                        <span className='text-xs text-gray-400'>
+                          {radio.time}
+                        </span>
+                      </div>
+                      <div className='flex items-center'>
+                        <span className='text-xs text-gray-400'>
+                          {radio.tags.map((tag) => `#${tag} `)}
+                        </span>
+                      </div>
                     </div>
                   </button>
                 ))

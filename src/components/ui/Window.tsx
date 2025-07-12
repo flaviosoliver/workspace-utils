@@ -17,7 +17,7 @@ const minSizes: Record<string, { width: number; height: number }> = {
   pomodoro: { width: 350, height: 820 },
   todo: { width: 620, height: 420 },
   notes: { width: 600, height: 400 },
-  music: { width: 473, height: 320 },
+  music: { width: 473, height: 430 },
   dataGenerator: { width: 550, height: 600 },
   aiChat: { width: 400, height: 350 },
   settings: { width: 700, height: 520 },
