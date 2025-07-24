@@ -7,6 +7,7 @@ import SpotifyPlayer from 'react-spotify-web-playback';
 import { FaSpotify, FaYoutube } from 'react-icons/fa';
 import { SiYoutubemusic } from 'react-icons/si';
 import { BsMusicPlayerFill } from 'react-icons/bs';
+import { X, ChevronDown } from 'lucide-react';
 import { IPlaylist, IRadio, ITrack } from '@/types';
 import {
   CgPlayButtonO,
@@ -15,7 +16,6 @@ import {
   CgPlayTrackPrevO,
 } from 'react-icons/cg';
 
-// Adicionar 'radio' como um tipo de serviço
 type StreamingService = 'spotify' | 'youtube' | 'youtubeMusic' | 'radio';
 
 export default function MusicWidget() {
@@ -28,7 +28,7 @@ export default function MusicWidget() {
     spotify: false,
     youtube: false,
     youtubeMusic: false,
-    radio: true, // Rádio sempre está "autenticado"
+    radio: true,
   });
   const [playlists, setPlaylists] = useState<IPlaylist[]>([]);
   const [currentTrack, setCurrentTrack] = useState<ITrack | null>(null);
@@ -36,8 +36,11 @@ export default function MusicWidget() {
   const [volume, setVolume] = useState(50);
   const [progress, setProgress] = useState(0);
   const [suggestedRadios, setSuggestedRadios] = useState<IRadio[]>([]);
-  // Adicionar estado para rastrear se está reproduzindo uma rádio
+  const [filteredRadios, setFilteredRadios] = useState<IRadio[]>([]);
   const [isPlayingRadio, setIsPlayingRadio] = useState(false);
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
+  const [isTagDropdownOpen, setIsTagDropdownOpen] = useState(false);
 
   const services: Record<
     StreamingService,
@@ -73,6 +76,10 @@ export default function MusicWidget() {
     checkAuthentication();
     fetchSuggestedRadios();
   }, [selectedService]);
+
+  useEffect(() => {
+    filterRadiosByTags();
+  }, [selectedTags, suggestedRadios]);
 
   function parseDuration(time: string): number {
     const parts = time.split(':').map(Number).reverse();
@@ -119,9 +126,40 @@ export default function MusicWidget() {
       const response = await fetch('/api/music/radio');
       const data = await response.json();
       setSuggestedRadios(data.radios);
+
+      const allTags = data.radios.reduce((tags: string[], radio: IRadio) => {
+        return [...tags, ...radio.tags];
+      }, []);
+      const uniqueTags = Array.from(new Set(allTags)).sort();
+      setAvailableTags(uniqueTags as string[]);
     } catch (error) {
       console.error('Erro ao buscar rádios sugeridas:', error);
     }
+  };
+
+  const filterRadiosByTags = () => {
+    if (selectedTags.length === 0) {
+      setFilteredRadios(suggestedRadios);
+    } else {
+      const filtered = suggestedRadios.filter((radio) =>
+        selectedTags.some((tag) => radio.tags.includes(tag))
+      );
+      setFilteredRadios(filtered);
+    }
+  };
+
+  const handleTagToggle = (tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setSelectedTags((prev) => prev.filter((tag) => tag !== tagToRemove));
+  };
+
+  const clearAllTags = () => {
+    setSelectedTags([]);
   };
 
   const handlePlayPause = () => {
@@ -173,20 +211,16 @@ export default function MusicWidget() {
   };
 
   const handleRadioSelect = (radio: IRadio) => {
-    // Extrair o ID do vídeo do YouTube da URI
     let videoId = radio.uri;
 
-    // Se for uma URL do YouTube, extrair apenas o ID do vídeo
     if (radio.uri.includes('youtube.com/watch?v=')) {
       videoId = radio.uri.split('v=')[1];
-      // Remover parâmetros adicionais se existirem
       const ampersandPosition = videoId.indexOf('&');
       if (ampersandPosition !== -1) {
         videoId = videoId.substring(0, ampersandPosition);
       }
     }
 
-    // Criar uma track a partir da rádio selecionada
     const radioTrack: ITrack = {
       id: videoId,
       title: radio.name,
@@ -199,15 +233,84 @@ export default function MusicWidget() {
     setCurrentTrack(radioTrack);
     setIsPlaying(true);
     setIsPlayingRadio(true);
-
-    // Definir o serviço como 'radio' em vez de depender da URI
     setSelectedService('radio');
   };
+
+  const renderTagFilter = () => (
+    <div className='mb-4'>
+      <div className='relative'>
+        <button
+          onClick={() => setIsTagDropdownOpen(!isTagDropdownOpen)}
+          className='w-full flex items-center justify-between p-2 bg-gray-700 border border-gray-600 rounded-lg text-white hover:bg-gray-600 transition-colors'
+        >
+          <span className='text-sm'>
+            {selectedTags.length > 0
+              ? `${selectedTags.length} tag(s) selecionada(s)`
+              : 'Filtrar por tags'}
+          </span>
+          <ChevronDown
+            className={`w-4 h-4 transition-transform ${
+              isTagDropdownOpen ? 'rotate-180' : ''
+            }`}
+          />
+        </button>
+
+        {isTagDropdownOpen && (
+          <div className='absolute top-full left-0 right-0 z-10 mt-1 bg-gray-700 border border-gray-600 rounded-lg shadow-lg max-h-48 overflow-y-auto'>
+            <div className='p-2 border-b border-gray-600'>
+              <button
+                onClick={clearAllTags}
+                className='text-xs text-blue-400 hover:text-blue-300'
+                disabled={selectedTags.length === 0}
+              >
+                Limpar todos
+              </button>
+            </div>
+            {availableTags.map((tag) => (
+              <label
+                key={tag}
+                className='flex items-center p-2 hover:bg-gray-600 cursor-pointer'
+              >
+                <input
+                  type='checkbox'
+                  checked={selectedTags.includes(tag)}
+                  onChange={() => handleTagToggle(tag)}
+                  className='mr-2 w-4 h-4 text-blue-600 bg-gray-700 border-gray-600 rounded focus:ring-blue-500'
+                />
+                <span className='text-sm text-white'>#{tag}</span>
+              </label>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Tags selecionadas */}
+      {selectedTags.length > 0 && (
+        <div className='flex flex-wrap gap-2 mt-2'>
+          {selectedTags.map((tag) => (
+            <span
+              key={tag}
+              className='inline-flex items-center px-2 py-1 bg-blue-600 text-white text-xs rounded-full'
+            >
+              #{tag}
+              <button
+                type='button'
+                aria-label='Remover tag'
+                onClick={() => removeTag(tag)}
+                className='ml-1 hover:text-gray-300'
+              >
+                <X className='w-3 h-3' />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 
   const renderPlayer = () => {
     if (!currentTrack) return null;
 
-    // Se for uma rádio (YouTube), usar o componente YouTube
     if (isPlayingRadio || selectedService === 'radio') {
       return (
         <div className='aspect-video w-full'>
@@ -228,7 +331,6 @@ export default function MusicWidget() {
       );
     }
 
-    // Para outros serviços, manter a lógica original
     switch (selectedService) {
       case 'youtube':
         return (
@@ -274,45 +376,15 @@ export default function MusicWidget() {
     }
   };
 
+  const radiosToDisplay =
+    filteredRadios.length > 0 ? filteredRadios : suggestedRadios;
+
   return (
     <div className='flex flex-col h-full bg-gray-800 text-white p-4 rounded-lg'>
-      <div className='flex space-x-4 mb-4'>
-        {Object.entries(services)
-          // Filtrar o serviço 'radio' da lista de botões
-          .filter(([key]) => key !== 'radio')
-          .map(([key, service]) => (
-            <button
-              aria-label='Selecionar serviço'
-              type='button'
-              key={key}
-              onClick={() => {
-                if (!isAuthenticated[key as StreamingService]) {
-                  window.location.href = service.authUrl;
-                } else {
-                  setSelectedService(key as StreamingService);
-                  // Resetar o estado de reprodução de rádio ao mudar de serviço
-                  setIsPlayingRadio(false);
-                }
-              }}
-              className={`flex items-center space-x-2 px-4 py-2 rounded ${
-                selectedService === key
-                  ? 'bg-blue-600'
-                  : 'bg-gray-700 hover:bg-gray-600'
-              }`}
-            >
-              {service.icon}
-              <span>{service.name}</span>
-            </button>
-          ))}
-      </div>
-
-      {/* Modificar a condição para mostrar o player */}
       {(selectedService && isAuthenticated[selectedService]) ||
       isPlayingRadio ? (
         <div className='flex flex-1 gap-4'>
-          {/* Coluna da esquerda: Playlists ou Rádios */}
           <div className='w-1/3 overflow-y-auto'>
-            {/* Mostrar a lista de playlists apenas se não estiver reproduzindo rádio */}
             {!isPlayingRadio && selectedService !== 'radio' ? (
               <>
                 <h3 className='text-lg font-semibold mb-4'>Suas Playlists</h3>
@@ -343,12 +415,12 @@ export default function MusicWidget() {
                 </div>
               </>
             ) : (
-              /* Mostrar a lista de rádios quando estiver reproduzindo rádio */
               <>
                 <h3 className='text-lg font-semibold mb-2'>Rádios Sugeridas</h3>
-                <div className='space-y-2 max-h-[calc(100vh-250px)] overflow-y-auto'>
-                  {suggestedRadios.length > 0 ? (
-                    suggestedRadios.map((radio) => (
+                {renderTagFilter()}
+                <div className='space-y-2 max-h-[calc(100vh-350px)] overflow-y-auto'>
+                  {radiosToDisplay.length > 0 ? (
+                    radiosToDisplay.map((radio) => (
                       <button
                         aria-label='Selecionar rádio'
                         type='button'
@@ -387,7 +459,9 @@ export default function MusicWidget() {
                     ))
                   ) : (
                     <p className='text-gray-400 text-sm'>
-                      Nenhuma rádio disponível
+                      {selectedTags.length > 0
+                        ? 'Nenhuma rádio encontrada com as tags selecionadas'
+                        : 'Nenhuma rádio disponível'}
                     </p>
                   )}
                 </div>
@@ -395,7 +469,6 @@ export default function MusicWidget() {
             )}
           </div>
 
-          {/* Coluna da direita: Player e controles */}
           <div className='flex-1 flex flex-col'>
             {renderPlayer()}
 
@@ -427,22 +500,22 @@ export default function MusicWidget() {
         </div>
       ) : (
         <div className='mb-6 text-center'>
-          <p className='text-gray-400'>
+          {/* <p className='text-gray-400'>
             {selectedService
               ? 'Faça login para acessar suas playlists'
               : 'Selecione um serviço de streaming ou uma rádio abaixo'}
-          </p>
+          </p> */}
         </div>
       )}
 
-      {/* Rádios Sugeridas - mostrar apenas quando não estiver reproduzindo rádio e não estiver autenticado em nenhum serviço */}
       {!isPlayingRadio &&
         !(selectedService && isAuthenticated[selectedService]) && (
           <div className='mt-4 p-4 bg-gray-900 rounded-lg'>
             <h3 className='text-lg font-semibold mb-2'>Rádios Sugeridas</h3>
+            {renderTagFilter()}
             <div className='space-y-2 max-h-40 overflow-y-auto'>
-              {suggestedRadios.length > 0 ? (
-                suggestedRadios.map((radio) => (
+              {radiosToDisplay.length > 0 ? (
+                radiosToDisplay.map((radio) => (
                   <button
                     aria-label='Selecionar rádio'
                     type='button'
@@ -479,7 +552,9 @@ export default function MusicWidget() {
                 ))
               ) : (
                 <p className='text-gray-400 text-sm'>
-                  Nenhuma rádio disponível
+                  {selectedTags.length > 0
+                    ? 'Nenhuma rádio encontrada com as tags selecionadas'
+                    : 'Nenhuma rádio disponível'}
                 </p>
               )}
             </div>
