@@ -11,6 +11,7 @@ import {
   FileText,
   Hash,
   Circle,
+  Check,
 } from 'lucide-react';
 
 const firstNames = [
@@ -78,6 +79,7 @@ export default function DataGeneratorWidget() {
   const [generatedData, setGeneratedData] = useState<FakeData[]>([]);
   const [selectedType, setSelectedType] = useState('password');
   const [quantity, setQuantity] = useState(1);
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
 
   const [passwordOptions, setPasswordOptions] = useState<PasswordOptions>({
     length: 12,
@@ -339,8 +341,38 @@ export default function DataGeneratorWidget() {
     setGeneratedData(newData);
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
+  const copyToClipboard = async (text: string, index: number) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex(null), 2000);
+    } catch (err) {
+      console.error('Erro ao copiar para a área de transferência:', err);
+      // Fallback para navegadores que não suportam clipboard API
+      const textArea = document.createElement('textarea');
+      textArea.value = text;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+      setCopiedIndex(index);
+      setTimeout(() => setCopiedIndex(null), 2000);
+    }
+  };
+
+  const copyAllData = async () => {
+    const allDataText = generatedData
+      .map((item, index) => {
+        const header = `=== ${item.type.toUpperCase()} ${index + 1} ===`;
+        const content =
+          typeof item.data === 'string'
+            ? item.data
+            : JSON.stringify(item.data, null, 2);
+        return `${header}\n${content}`;
+      })
+      .join('\n\n');
+
+    await copyToClipboard(allDataText, -1);
   };
 
   const exportData = () => {
@@ -370,6 +402,24 @@ export default function DataGeneratorWidget() {
       default:
         return <Circle className='w-4 h-4' />;
     }
+  };
+
+  const formatDataForDisplay = (data: unknown): string => {
+    if (typeof data === 'string') {
+      return data;
+    }
+    return JSON.stringify(data, null, 2);
+  };
+
+  const formatDataForCopy = (data: unknown): string => {
+    if (typeof data === 'string') {
+      return data;
+    }
+    // Para objetos, criar um formato mais legível para cópia
+    const obj = data as Record<string, unknown>;
+    return Object.entries(obj)
+      .map(([key, value]) => `${key}: ${value}`)
+      .join('\n');
   };
 
   return (
@@ -411,13 +461,23 @@ export default function DataGeneratorWidget() {
         </div>
 
         {generatedData.length > 0 && (
-          <button
-            onClick={exportData}
-            className='w-25 px-4 py-1  bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2'
-          >
-            <Download className='w-4 h-4' />
-            JSON
-          </button>
+          <div className='flex gap-2'>
+            <button
+              onClick={copyAllData}
+              className='px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center gap-2'
+              title='Copiar todos os dados'
+            >
+              <Copy className='w-4 h-4' />
+              Todos
+            </button>
+            <button
+              onClick={exportData}
+              className='px-3 py-1 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center gap-2'
+            >
+              <Download className='w-4 h-4' />
+              JSON
+            </button>
+          </div>
         )}
       </div>
 
@@ -631,30 +691,52 @@ export default function DataGeneratorWidget() {
                 aria-label='Copiar'
                 type='button'
                 onClick={() =>
-                  copyToClipboard(
-                    typeof item.data === 'string'
-                      ? item.data
-                      : JSON.stringify(item.data, null, 2)
-                  )
+                  copyToClipboard(formatDataForCopy(item.data), index)
                 }
-                className='text-gray-400 hover:text-blue-400 transition-colors'
+                className={`transition-colors ${
+                  copiedIndex === index
+                    ? 'text-green-400'
+                    : 'text-gray-400 hover:text-blue-400'
+                }`}
+                title='Copiar para área de transferência'
               >
-                <Copy className='w-4 h-4' />
+                {copiedIndex === index ? (
+                  <Check className='w-4 h-4' />
+                ) : (
+                  <Copy className='w-4 h-4' />
+                )}
               </button>
             </div>
 
             <div className='space-y-2 text-sm'>
               {typeof item.data === 'string' ? (
-                <pre className='whitespace-pre-wrap'>{item.data}</pre>
+                <pre
+                  className='whitespace-pre-wrap text-gray-200 bg-gray-900 p-3 rounded cursor-pointer hover:bg-gray-850 transition-colors'
+                  onClick={() => copyToClipboard(item.data as string, index)}
+                  title='Clique para copiar'
+                >
+                  {item.data}
+                </pre>
               ) : (
-                Object.entries(item.data as Record<string, unknown>).map(
-                  ([key, value]) => (
-                    <div key={key} className='flex justify-between'>
-                      <span className='text-gray-400'>{key}:</span>
-                      <span className='text-white'>{String(value)}</span>
-                    </div>
-                  )
-                )
+                <div className='space-y-1'>
+                  {Object.entries(item.data as Record<string, unknown>).map(
+                    ([key, value]) => (
+                      <div
+                        key={key}
+                        className='flex justify-between p-2 bg-gray-900 rounded cursor-pointer hover:bg-gray-850 transition-colors'
+                        onClick={() => copyToClipboard(String(value), index)}
+                        title='Clique para copiar este campo'
+                      >
+                        <span className='text-gray-400 font-medium'>
+                          {key}:
+                        </span>
+                        <span className='text-white text-right'>
+                          {String(value)}
+                        </span>
+                      </div>
+                    )
+                  )}
+                </div>
               )}
             </div>
           </div>
