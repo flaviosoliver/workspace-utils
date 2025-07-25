@@ -134,8 +134,14 @@ export default function NotesWidget() {
       note.content.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDate = (dateString: string | Date) => {
+    const date =
+      typeof dateString === 'string' ? new Date(dateString) : dateString;
+
+    if (isNaN(date.getTime())) {
+      return 'Data inválida';
+    }
+
     return date.toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
@@ -203,7 +209,7 @@ export default function NotesWidget() {
                       {note.content || 'Sem conteúdo'}
                     </p>
                     <p className='text-xs text-gray-500 mt-2'>
-                      {formatDate(note.updatedAt.toISOString())}
+                      {formatDate(note.updatedAt)}
                     </p>
                   </div>
                   <button
@@ -281,8 +287,7 @@ export default function NotesWidget() {
                   {isEditing ? 'Editando' : selectedNote.title}
                 </h3>
                 <p className='text-sm text-gray-400'>
-                  Atualizada em{' '}
-                  {formatDate(selectedNote.updatedAt.toISOString())}
+                  Atualizada em {formatDate(selectedNote.updatedAt)}
                 </p>
               </div>
 
